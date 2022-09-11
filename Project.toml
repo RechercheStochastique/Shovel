@@ -1,0 +1,11 @@
+name = "Shovel"
+uuid = "31ac0c1a-a2de-4f35-b73e-55994b12602a"
+authors = ["gagno_000 "]
+version = "0.1.0"
+
+[deps]
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+Match = "7eb4fadd-790c-5f42-8a69-bfa0b872bfbf"
+Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
+Snowflake = "7bd9edc1-4fdc-40a1-a0f6-da58fb4f45eb"
