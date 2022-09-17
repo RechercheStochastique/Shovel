@@ -1,29 +1,40 @@
-struct QPort
-    QCid::Base.UUID
-    Qw::Int
-    QPort(QCid, Qw) Qw < 1 ? error("wire number must be greater than 0") : new(QCid, Qw)
+struct Plug
+    circuit::Base.UUID
+    qbit::Int
+    Plug(c::QuantumCircuit, qb::Int) = new(c.id, qb)
 end
 
-struct QPlug
-    QCidin::Base.UUID
-    Qwin::Int
-    QCidout::Base.UUID
-    Qwout::Int
-    QPlug(QCidin, Qwin, QCidout, Qwout) = QCidin == QCidout ? error("Circuit can't connect to itself") : new(QCidin, Qwin, QCidout, Qwout)
+mutable struct Connector
+    plugin::Plug
+    plugout::Plug
+    stage::Int = 0
+    wire::Int = 0
+    Connector(plg1::Plug, plg2::Plug) = new(plg1, plg2, 0, 0)
+    Connector(c1::QuantumCircuit, qb1::Int, c2::QuantumCircuit, qb2::Int) = (
+        plg1=Plug(c1,qb1); plg2=Plug(c2,qb2); new(plg1, plg2, 0, 0))
 end
 
-struct QCwtRank
-    qc::SnowFlake.QuantumCircuit
-    rank::Int
+mutable struct Wire
+    order::Int
+    elements::Vector{Connector}
+end
+
+mutable struct CircuitPosition
+    circuit::QuantumCircuit
+    stage::Int
+    top::Int
+    bottom::Int
 end
 
 struct MQC
-    CircuitList::Vector{Snowflake.QuantumCircuit}(undef,0)
-    QPortList::Vector{QPlug}(undef,0)
-    nbwire::Int(0)
-    maxrank::Int(0)
-    CircuitRanking::Vector{Base.UUID, Int}(undef,0)
-    WireOrder::Vector{Int}(undef,0)
+    circuit_list::Vector{Snowflake.QuantumCircuit}(undef,0)
+    connector_list::Vector{Connector}(undef,0)
+    wire_list::Vector{Wire}(undef,0)
+    MQC(crv::Vector{QuantumCircuit}) = (
+        mcq = new(); for c in crv push!(mcq.circuit_list, c) end; return mcq)
+    MQC(crv::Vector{QuantumCircuit}, cnv::Vector{Connector}) = (
+        mcq = new(); for c in crv push!(mcq.circuit_list, c) end; 
+        for n in cnv push!(mcq.connector_list, c) end; return mcq)
 end
 
 function MQCAddQC(mqc::MQC, newc::SnowFlakeQuantumCircuit)
