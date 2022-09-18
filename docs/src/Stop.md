@@ -24,7 +24,7 @@ The variance of this estimator is given by:
 V\big( \hat{p} \big) = \frac{p ( 1- p)}{N}
 ```
 
-If ``M`` is large, then 
+If ``M`` is large, then  
 
 ```math
 Z= \sqrt{\frac{N}{p(1-p)}}\;(\hat{p} - p )

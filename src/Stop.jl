@@ -1,11 +1,11 @@
-"""
+#= """
 FinalResult is a structure containing the statistical result of the shots
 """
 struct FinalResult
     Probability::Float64
     TransProbability::Float64
     Iterations::Int64
-end
+end =#
 
 export SampleSize
 """
