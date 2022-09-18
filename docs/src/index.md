@@ -3,6 +3,6 @@
 The CRS Quantun package contains a set of useful functions for scientists using the Qube computer.
 
 ```@docs
-sequentialstop
+Stop
 ToLaTeX
 ```
