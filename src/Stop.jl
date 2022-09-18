@@ -1,53 +1,3 @@
-#= """
-FinalResult is a structure containing the statistical result of the shots
-"""
-struct FinalResult
-    Probability::Float64
-    TransProbability::Float64
-    Iterations::Int64
-end =#
-
-export SampleSize
-"""
-SampleSize(c::QuantumCircuit)::Int64
-
-Calculate the sample size (number of shots) required to reach, with probability 1-γ, a difference not exceeding Δ between
-``|\\alpha_i|^2|`` and the observed proportion ``p_i`` for all possible states in the sample.
-
-# Arguments
-- `c::QuantumCircuit`: is a Snowflake cirquit.
-
-The function return a positive integer
-"""
-function SampleSize(c::QuantumCircuit, Δ::Float64, γ::Float64)::Int64
-    worst = Int64(0)
-
-    CoefH = H(γ,Δ)
-    ψ = Snowflake.simulate(c)
-    for α in ψ
-        p = abs(α)^2
-        n = Int64(ceil(p*(1-p) * CoefH))
-        if worst < n worst = n end
-    end
-    return worst
-end
-
-"""
-StatesProportions is a structure containing the description and actual proportions of each state after a simulation 
-"""
-struct StatesProportions
-    Value::String
-    Proportion::Float64
-end
-
-" Ajusting factor for the stopping rule"
-function H(γ, Δ)::Float64
-    X = Normal()
-    ϕ =quantile.(Normal(),(1-γ/2))
-    ϕ = Float64((ϕ/Δ)^2.0)
-    return ϕ
-end
-
 export stop
 """
 stop(fun::function, circuit::QuantumCircuit, Δ::Float64, γ::Float64, verbose=false)
@@ -60,7 +10,7 @@ for each of the state measurements.
 - `circuit::QuantumCircuit`: a QuantumCircuit as defined by Snowflake
 - `Δ::Float64`: the difference between the real value and the estimation
 - `γ::Float64`: the probability that the estimator is more that Δ apart from the true value. 
-For more details please see [here](optimalstopingexpl/index.html).
+For more details please see [here](Stop/index.html).
 - `verbose::boolean`: println usefull information on screen if needed for estimating suitable for Δ and γ. 
 # Example
 ```julia-repl
@@ -183,4 +133,46 @@ function stop(fun::Function, circuit::QuantumCircuit, Δ::Float64, γ::Float64, 
     ψ = Snowflake.simulate(circuit)
     println(ψ)
     return(S_n)
+end
+
+export SampleSize
+"""
+SampleSize(c::QuantumCircuit)::Int64
+
+Calculate the sample size (number of shots) required to reach, with probability 1-γ, a difference not exceeding Δ between
+``|\\alpha_i|^2|`` and the observed proportion ``p_i`` for all possible states in the sample.
+
+# Arguments
+- `c::QuantumCircuit`: is a Snowflake cirquit.
+
+The function return a positive integer
+"""
+function SampleSize(c::QuantumCircuit, Δ::Float64, γ::Float64)::Int64
+    worst = Int64(0)
+
+    CoefH = H(γ,Δ)
+    ψ = Snowflake.simulate(c)
+    for α in ψ
+        p = abs(α)^2
+        n = Int64(ceil(p*(1-p) * CoefH))
+        if worst < n worst = n end
+    end
+    return worst
+end
+
+export StatesProportions
+"""
+StatesProportions is a structure containing the description and actual proportions of each state after a simulation 
+"""
+struct StatesProportions
+    Value::String
+    Proportion::Float64
+end
+
+" Ajusting factor for the stopping rule"
+function H(γ, Δ)::Float64
+    X = Normal()
+    ϕ =quantile.(Normal(),(1-γ/2))
+    ϕ = Float64((ϕ/Δ)^2.0)
+    return ϕ
 end

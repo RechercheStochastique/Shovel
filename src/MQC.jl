@@ -1,5 +1,11 @@
 using Snowflake
 
+export Plug
+"""
+Plug is a structure containing the UUID of a circuit and a qubit number. It is the basic element of a Connector.
+The only validation done is that the qubit number of the circuit is valid (>0 and <=qubit_count).
+The operator "==" is defined for plugs.
+"""
 struct Plug
     circuit::Base.UUID
     qubit::Int
@@ -7,6 +13,14 @@ struct Plug
 end
 
 Base.:(==)(plg1::Plug, plg2::Plug) = ((plg1.circuit == plg2.circuit && plg1.qubit == plg2.qubit) ? true : false)
+
+export Connector
+"""
+Connector is a structure containing two plugs: 1) the input plug which is when the qubit/circuit is coming from and 2) the output plug indicating
+to which qubit/circuit it is going to.
+Users can either create plugs and then a connector from them or directly create a connector by providing the circuit and the qubit.
+The operator "==" is defined for connectors.
+"""
 mutable struct Connector
     plugin::Plug
     plugout::Plug
@@ -19,6 +33,15 @@ end
 
 Base.:(==)(connec1::Connector, connec2::Connector) = (if connec1.plugin == connec2.plugin && connec1.plugout == connec2.plugout return true else return false end)
 
+export isinverse
+"""
+isinverse(connec1::Connector, connec2::Connector)::Boolean 
+
+A function to checks if a given connector is the inverse of another one.
+    The function is used for internal consistency when a connector is added to an MQC. it will return true if 
+        "connec1.plugin == connec2.plugout && connec1.plugin == connec2.plugout"
+        and false otherwise.
+"""
 function isinverse(connec1::Connector, connec2::Connector)::Boolean
     if connec1.plugin == connec2.plugout && connec1.plugin == connec2.plugout 
         return true 
@@ -27,6 +50,13 @@ function isinverse(connec1::Connector, connec2::Connector)::Boolean
     end
 end
 
+export isbefore
+"""
+isbefore(connec1::Connector, connec2::Connector)::Boolean 
+
+A function to checks if the output plug of connec1 is the same as the input plug of connec2.
+    if true, it means that connec1 is just before connec2 and they are connected together in the same wire.
+"""
 function isbefore(connec1::Connector, connec2::Connector)::Boolean
     if connec1.plugout == connec2.plugin
         return true
@@ -35,6 +65,10 @@ function isbefore(connec1::Connector, connec2::Connector)::Boolean
     end
 end
 
+export Wire
+"""
+structure Wire is a sequence of connector making a wire in the MQC.
+"""
 mutable struct Wire
     order::Int
     elements::Vector{Connector}
@@ -62,6 +96,12 @@ mutable struct CircuitPosition
     bottom::Int
 end
 
+export MQC
+"""
+The structure MQC is the main element of the Meta Quantum Circuit utility.
+After adding quantum circuits (or "circuits" for short) and connectors, a quantikz/LaTeX file can be produced.
+Most importantly, a new circuit can be generated from the MQC. 
+"""
 struct MQC
     circuit_list::Vector{QuantumCircuit}
     connector_list::Vector{Connector}
@@ -69,6 +109,14 @@ struct MQC
     MQC() = new(Vector{QuantumCircuit}(), Vector{Connector}(), Vector{Wire}())
 end
 
+export MQCAddCircuit
+"""
+MQCAddCircuit(mqc::MQC, newc::QuantumCircuit)::Boolean 
+
+This function is used to add a Snowflake QuantumCircuit to an MQC.
+    A given circuit cannot be add twice ot the MQC. However, two distinct circuits with identical circuitry can.
+    The function will retrun true if the addition was successful.
+"""
 function MQCAddCircuit(mqc::MQC, newc::QuantumCircuit)::Boolean
     # check if circuit is already there
     for c in mqc.circuit_list
@@ -82,6 +130,13 @@ function MQCAddCircuit(mqc::MQC, newc::QuantumCircuit)::Boolean
     return true
 end
 
+export MQCAddConnector
+"""
+MQCAddConnector(mqc::MQC, connec::Connector)::Boolean 
+
+This function is used to add a connector to an MQC. It has some consistancy checks and will return
+    false if the proposed connector creates inconsistencies such as circular circuitry or duplicate plugs.
+"""
 function MQCAddConnector(mqc::MQC, connec::Connector)::Boolean
     # Check if Plug is acceptable.
     # Firstly, are the circuits and plugs existant.
@@ -151,7 +206,15 @@ function MQCAddConnector(mqc::MQC, connec::Connector)::Boolean
 
 end
 
-#= function sew(mqc::MQC)
+#= 
+export sew
+"""
+sew(mqc::MQC)
+
+This is the main function of an MQC. It will output a valide Snowflake QuantumCircuit made up of the different circuits
+    in it and according to the connector provided.
+"""
+function sew(mqc::MQC)
     if length(mqc.CircuitList) == 1 return end # nothing to do with only 1 circuit.
     if length(mqc.QPortList) == 0 return end # nothing to do with no connecting wire.
 
