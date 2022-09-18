@@ -1,17 +1,38 @@
+using Snowflake
+
 struct Plug
     circuit::Base.UUID
-    qbit::Int
-    Plug(c::QuantumCircuit, qb::Int) = new(c.id, qb)
+    qubit::Int
+    Plug(c::QuantumCircuit, qb::Int) = ((qb < 1 || qb > c.qubit_count) ? nothing : new(c.id, qb))
 end
 
+Base.:(==)(plg1::Plug, plg2::Plug) = ((plg1.circuit == plg2.circuit && plg1.qubit == plg2.qubit) ? true : false)
 mutable struct Connector
     plugin::Plug
     plugout::Plug
-    stage::Int = 0
-    wire::Int = 0
+    stage::Int
+    wire::Int
     Connector(plg1::Plug, plg2::Plug) = new(plg1, plg2, 0, 0)
     Connector(c1::QuantumCircuit, qb1::Int, c2::QuantumCircuit, qb2::Int) = (
         plg1=Plug(c1,qb1); plg2=Plug(c2,qb2); new(plg1, plg2, 0, 0))
+end
+
+Base.:(==)(connec1::Connector, connec2::Connector) = (if connec1.plugin == connec2.plugin && connec1.plugout == connec2.plugout return true else return false end)
+
+function isinverse(connec1::Connector, connec2::Connector)::Boolean
+    if connec1.plugin == connec2.plugout && connec1.plugin == connec2.plugout 
+        return true 
+    else 
+        return false
+    end
+end
+
+function isbefore(connec1::Connector, connec2::Connector)::Boolean
+    if connec1.plugout == connec2.plugin
+        return true
+    else
+        return false
+    end
 end
 
 mutable struct Wire
@@ -19,6 +40,21 @@ mutable struct Wire
     elements::Vector{Connector}
 end
 
+function ismember(connec::Connector, wire::Wire)::Boolean
+    for con in wire.elements
+        if connec == con return true end
+    end
+    return false
+end
+
+function ismember(plg::Plug, wire::Wire)::Boolean
+    for con in wire.elements
+        if plg == con.plugin || plg == con.plugout 
+            return true 
+        end
+    end
+    return false
+end
 mutable struct CircuitPosition
     circuit::QuantumCircuit
     stage::Int
@@ -27,88 +63,95 @@ mutable struct CircuitPosition
 end
 
 struct MQC
-    circuit_list::Vector{Snowflake.QuantumCircuit}(undef,0)
-    connector_list::Vector{Connector}(undef,0)
-    wire_list::Vector{Wire}(undef,0)
-    MQC(crv::Vector{QuantumCircuit}) = (
-        mcq = new(); for c in crv push!(mcq.circuit_list, c) end; return mcq)
-    MQC(crv::Vector{QuantumCircuit}, cnv::Vector{Connector}) = (
-        mcq = new(); for c in crv push!(mcq.circuit_list, c) end; 
-        for n in cnv push!(mcq.connector_list, c) end; return mcq)
+    circuit_list::Vector{QuantumCircuit}
+    connector_list::Vector{Connector}
+    wire_list::Vector{Wire}
+    MQC() = new(Vector{QuantumCircuit}(), Vector{Connector}(), Vector{Wire}())
 end
 
-function MQCAddQC(mqc::MQC, newc::SnowFlakeQuantumCircuit)
+function MQCAddCircuit(mqc::MQC, newc::QuantumCircuit)::Boolean
     # check if circuit is already there
-    for c in mqc.CircuitList
+    for c in mqc.circuit_list
         if newc.id == c.id
             error("Circuit already there, can't add")
-            return nothing
+            return false
         end
-    
-    push!(mqc.CircuitList, newc)
-    push!(mcq.CircuitRanking, (newc.id, 2))
-    mqc.nbwire = mqc.nbwire + newc.qubit_count
-
-    # We now create a QPlug for all the new qbits from this new circuit. They all connect to the
-    # bogus starting circuit with id=0. The total number of wires is increased accordingly.
-    for i in 1:newc.qubit_count
-        mqc.nbwire = mqc.nbwire +1
-        qp = QPlug(0,mqc.nbwire, newc.id, i)
-        push!(mqc.QPortList, qp)
     end
 
-    #sew(mqc)
+    push!(mqc.CircuitList, newc)
+    return true
 end
 
-function MQCAddQPlug(mqc::MQC, qplug::QPlug)
-    # Check if qplug is acceptable.
+function MQCAddConnector(mqc::MQC, connec::Connector)::Boolean
+    # Check if Plug is acceptable.
     # Firstly, are the circuits and plugs existant.
+
     infound = false
     outfound = false
-    for c in mqc.CircuitList
-        if c.id == qplug.QCidin
-            if qplug.Qwin > c.qubit_count
-                error("\"in\" port of plug is out of qubit reach")
-                return nothing
+    for c in mqc.circuit_list
+        if c.id == connec.plugin.circuit
+            if connec.plugin.qubit > c.qubit_count
+                error("the qubit of plugin in connector is out of reach")
+                return flase
             end
             infound = true 
         end
-        if c.id == qplug.QCidout
-            if qplug.Qwout > c.qubit_count
+        if c.id == connec.plugout.circuit
+            if connec.plugout.qubit > c.qubit_count
                 error("out port of wire is out of qbit reach")
-                return nothing
+                return false
             end
             outfound = true
         end
     end
+
     if infoud == false || outfound == false
-        error("the circuits defined in the QPlug are not in the circuit list")
-        return nothing
+        error("At least one circuits defined in the plugs of the connector are not in the circuit list of the MQC. Noting to connect to")
+        return false
     end
 
     # Now, is there a duplicate
-    for plg in mqc.QPortList
-        if plg.QCidin == qplug.QCidin && plg.Qwin == qplug.Qwin
-            error("There is already a QPlug with the same \"in\" connetions")
-            return nothing
+    for con in mqc.connector_list
+        if connec.plugin == con.plugin
+            error("There is already a connector with the same plugin in the MQC")
+            return false
         end
-        if plg.QCidout == qplug.QCidout && plg.Qwout == qplug.Qwout
-            error("There is already a QPlug with the same \"out\" connetions")
-            return nothing
+        if connec.plugout == con.plugout
+            error("There is already a connector with the same plugout in the MQC")
+            return false
         end
     end
 
-    # All is fine, we can add this QPlug.
-    # But this has consequnces. 
-    #    1- A wire is potentially disapearing 
-    #    2- The rank of a circuit may need to be updated.
+    # At this point the connector seems good but we have yet to validate circularity
+    augmented_list = Vector{Connector}(undef,0)
+    for con in mqc.connector_list
+        push!(augmented_list, con)
+    end
+    for i in 1:length(mqc.connector_list)-1
+        connec1 = mqc.connector_list[i]
+        for j in i:length(mqc.connector_list)
+            connec2 = mqc.connector_list[j]
+            if connec1.plugin == connec2.plugout
+                connec3 = Connector(connec2.plugin, connec1.plugout)
+                push!(augmented_list, connec3)
+            end
+            if connec1.plugout == connec2.plugin
+                connec3 = Connector(connec1.plugin, connec2.plugout)
+                push!(augmented_list, connec3)
+            end
+        end
+    end
+    for con in augmented_list
+        if isinverse(connec, con) == true
+            error("There is a circular definition")
+            return false
+        end
+    end
+    return true
 
-    push!(mqc.QPortList, qplug)
-
-    #sew(mqc)
 end
 
-function sew(mqc::MQC)
+#= function sew(mqc::MQC)
     if length(mqc.CircuitList) == 1 return end # nothing to do with only 1 circuit.
     if length(mqc.QPortList) == 0 return end # nothing to do with no connecting wire.
 
@@ -124,7 +167,7 @@ function sew(mqc::MQC)
         nochange = true
         for cwrout in mqc.CircuitList
             for qport in mqc.QPortList
-                if cwrout.qc.id = qport.PortOut.QCid # The circuit is at the  end of at least one wire.
+                if cwrout.qc.id == qport.PortOut.QCid # The circuit is at the  end of at least one wire.
                     for cwrin in mqc.CircuitList
                         if cwrin.qc.id == qport.PortIn.QCid # This circuit is outputing to the other one
                             if cwrout.qc.rank < cwrin.qc.rank+1
@@ -174,5 +217,8 @@ function sew(mqc::MQC)
     for rank in 1:mqc.maxrank
         for cwr in mqc.CircuitList
             if cwr.rank == rank # The qbits of that circuit have to be assigned to a wire order.
+            end
+        end
+
                 
-end
+end =#

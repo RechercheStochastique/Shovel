@@ -48,13 +48,15 @@ function H(γ, Δ)::Float64
     return ϕ
 end
 
-export sequentialstop
+export stop
 """
-sequentialstop(circuit::QuantumCircuit, Δ::Float64, γ::Float64, afunction, verbose=false)
+stop(fun::function, circuit::QuantumCircuit, Δ::Float64, γ::Float64, verbose=false)
 
 Runs a circuit until there is a probability 1-γ that the precision Δ is reached
 for each of the state measurements.
 # Arguments
+- `fun::function : is a function you want to calculate on the resulting proportion estimate on the final state of the circuit.`
+`The function must take an array of Float64 as and input and return a Float64`
 - `circuit::QuantumCircuit`: a QuantumCircuit as defined by Snowflake
 - `Δ::Float64`: the difference between the real value and the estimation
 - `γ::Float64`: the probability that the estimator is more that Δ apart from the true value. 
@@ -62,11 +64,11 @@ For more details please see [here](optimalstopingexpl/index.html).
 - `verbose::boolean`: println usefull information on screen if needed for estimating suitable for Δ and γ. 
 # Example
 ```julia-repl
-julia> sequentialstop(circuit, 0.001, 0.10, sqrt)
+julia> stop(fun, circuit, 0.001, 0.10, sqrt)
 1
 ```
 """
-function sequentialstop(circuit::QuantumCircuit, Δ::Float64, γ::Float64, verbose=false)
+function stop(fun::Function, circuit::QuantumCircuit, Δ::Float64, γ::Float64, verbose=false)
     iterations = Int64(0)
     NbOfStates = Int(2^circuit.qubit_count)
     S_n = zeros(Float64, NbOfStates)
@@ -75,6 +77,17 @@ function sequentialstop(circuit::QuantumCircuit, Δ::Float64, γ::Float64, verbo
     minimaliteration = Int64(0)
     iterationsDone = Int64(0)
     iterationsLeft = Int64(0)
+
+    if hasmethod(fun, [Vector{Float64}]) != true 
+        error("The function does not have the proper format fun(result::Vector{Float64})::Float64")
+        return nothing
+    end
+    test = Vector{Float64}(NbOfStates)
+    test[1:end] = 1.0/NbOfStates
+    if Typeof(fun(test)) != Float64
+        error("The provided function does not return a Float64")
+        return nothing
+    end
 
     minimaliteration = Int64(ceil(log(1-γ)/log(1-Δ)))
     if verbose println("Minimal number of iteration = $(minimaliteration)") end

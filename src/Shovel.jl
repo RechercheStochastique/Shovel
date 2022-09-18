@@ -6,8 +6,8 @@ using Snowflake
 using Distributions
 using Match
 
-include(ToLaTeX.jl)
-include(MQC.jl)
-include(Stop.jl)
+include("ToLaTeX.jl")
+include("Stop.jl")
+include("MQC.jl")
 
 end # module Shovel
