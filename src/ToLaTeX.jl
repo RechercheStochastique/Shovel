@@ -1,6 +1,6 @@
 export ToLaTeX
 """
-ToLaTeX(c::QuantumCircuit, FName::String)
+ToLaTeX(c::QuantumCircuit, FName::String)::Bool
 
 Will generate a file containing the Latex/quantikz code in the standalone documentclass.
 # Arguments
@@ -36,7 +36,7 @@ This is the result of a pdfLaTeX compilation.
 
 ![ToLaTeX output](/Denys/Shovel/docs/build/assets/Latex_Circuit.PNG)
 """
-function ToLaTeX(c::QuantumCircuit, FName = "")::Boolean
+function ToLaTeX(c::QuantumCircuit, FName = "")::Bool
     #Originalstdout = stdout # we are going to capture the print of the circuit in a pipe , then read the pipe, process and write to a file
     #(rd, wr) = redirect_stdout()
     #print(c)
