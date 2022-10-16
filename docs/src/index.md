@@ -3,16 +3,16 @@
 The CRS Quantun package contains a set of useful functions for scientists using the Qube computer.
 
 ```@docs
-stop
-SampleSize
-StatesProportions
+shootuntil
 ToLaTeX
 Plug
 Connector
 isinverse
 isbefore
-Wire
+printlightQC
 MQC
 MQCAddCircuit
 MQCAddConnector
+sew
+printMQC
 ```

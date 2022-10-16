@@ -1,6 +1,6 @@
-export stop
+export shootuntil
 """
-stop(fun::function, circuit::QuantumCircuit, Δ::Float64, γ::Float64, verbose=false)
+shootuntil(fun::function, circuit::QuantumCircuit, Δ::Float64, γ::Float64, verbose=false)
 
 Runs a circuit until there is a probability 1-γ that the precision Δ is reached
 for each of the state measurements.
@@ -14,15 +14,15 @@ For more details please see [here](Stop/index.html).
 - `verbose::boolean`: println usefull information on screen if needed for estimating suitable for Δ and γ. 
 # Example
 ```julia-repl
-julia> stop(fun, circuit, 0.001, 0.10, sqrt)
+julia> shootuntil(fun, circuit, 0.001, 0.10, sqrt)
 1
 ```
 """
-function stop(fun::Function, circuit::QuantumCircuit, Δ::Float64, γ::Float64, verbose=false)
+function shootuntil(fun::Function, circuit::QuantumCircuit, Δ::Float64, γ::Float64, verbose=false)
     iterations = Int64(0)
     NbOfStates = Int(2^circuit.qubit_count)
     S_n = zeros(Float64, NbOfStates)
-    T_n = Float64(0.0)
+    histo = zeros(Float64, NbOfStates)
     worst = Int64(0)
     minimaliteration = Int64(0)
     iterationsDone = Int64(0)
@@ -45,9 +45,11 @@ function stop(fun::Function, circuit::QuantumCircuit, Δ::Float64, γ::Float64, 
     if verbose println("Coefficient H(γ,Δ) = $(CoefH)") end
     worst = Int64(ceil(CoefH/4.0))
     if verbose println("Worst case, we do $(worst) iterations") end
+    #=
     owner = ENV["USERNAME"]
     token = "token_bidon" # ENV["SNOWFLAKE_TOKEN"]
     host = "local" #ENV["SNOWFLAKE_HOST"]
+    =#
     FinalProp = Float64(0)
     
     # We first do the minimal number of iteration
@@ -64,16 +66,34 @@ function stop(fun::Function, circuit::QuantumCircuit, Δ::Float64, γ::Float64, 
         end
         S_n[value+1] = S_n[value+1] + 1
     end
-
     iterationsDone = minimaliteration
-    T_n = 0.0
+
+    # We now compute the functions on the observed frequencies and estimate the derivative
+    T_n = Float64(0.0)
     for i in 1:NbOfStates
         tmp = ((S_n[i] * ((iterationsDone - S_n[i]))) * CoefH)^(1/3)
         if T_n < tmp 
             T_n = tmp 
-        end 
+        end
+        histo[i] = S_n[i]
     end
     minimaliteration = Int64(ceil(T_n)) # this is the updated minimal value given what we have observed do far.
+
+    # We now estimate the total derivate of fun over the frequencies in array histo
+    totalderiv = float64(0.0)
+    for i in 1:NbOfStates
+        h0 = histo[i]
+        b1 = max(0, histo[i]-Δ)
+        histo[i] = b1
+        fmin = fun(histo)
+        b2 = min(1, histo[i]+Δ)
+        histo[i] = b2
+        fmax = fun(histo)
+        histo[i] = h0
+        deriv = (fmax - fmin) /(b2 - b1)
+        deriv = Deriv^2 * (h0 * (1-h0)) / iterationsDone
+        totalderiv += deriv
+    end
     
     if verbose
         println("$(iterationsDone) iterations done, whereas max(T_n) is equal to $(minimaliteration).")
