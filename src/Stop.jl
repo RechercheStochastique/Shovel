@@ -21,20 +21,21 @@ julia> shootuntil(fun, circuit, 0.001, 0.10, sqrt)
 function shootuntil(fun::Function, circuit::QuantumCircuit, Δ::Float64, γ::Float64, verbose=false)
     iterations = Int64(0)
     NbOfStates = Int(2^circuit.qubit_count)
-    S_n = zeros(Float64, NbOfStates)
-    histo = zeros(Float64, NbOfStates)
+    S_n = zeros(Int64, NbOfStates)
+    S_ntemp = zeros(Float64, NbOfStates)
     worst = Int64(0)
     minimaliteration = Int64(0)
     iterationsDone = Int64(0)
     iterationsLeft = Int64(0)
+    totalderiv = Float64(0.0)
 
-    if hasmethod(fun, [Vector{Float64}]) != true 
-        error("The function does not have the proper format fun(result::Vector{Float64})::Float64")
+    if hasmethod(fun, [Vector{Float64}, Int64]) != true 
+        error("The function $(fun) does not have the proper format fun(::Vector{Float64}, ::Int64)::Float64")
         return nothing
     end
-    test = Vector{Float64}(NbOfStates)
-    test[1:end] = 1.0/NbOfStates
-    if Typeof(fun(test)) != Float64
+    test = Vector{Float64}(undef, NbOfStates)
+    test[1:end] .= 1.0/NbOfStates
+    if typeof(fun(test, 0)) != Float64
         error("The provided function does not return a Float64")
         return nothing
     end
@@ -53,50 +54,23 @@ function shootuntil(fun::Function, circuit::QuantumCircuit, Δ::Float64, γ::Flo
     FinalProp = Float64(0)
     
     # We first do the minimal number of iteration
-    Result = Snowflake.simulate_shots(circuit, minimaliteration)
+    result = Snowflake.simulate_shots(circuit, minimaliteration)
     # Now we build the resulting frequency table
-    for iter ∈ 1:minimaliteration
-        value = 0
-        n = 1<<(circuit.qubit_count-1)
-        for ch in Result[iter]
-            if ch == '1' 
-                value = value + n 
-            end
-        n = n>>1
-        end
-        S_n[value+1] = S_n[value+1] + 1
-    end
+    buildfreq!(S_n, result, circuit.qubit_count)
     iterationsDone = minimaliteration
 
     # We now compute the functions on the observed frequencies and estimate the derivative
-    T_n = Float64(0.0)
-    for i in 1:NbOfStates
-        tmp = ((S_n[i] * ((iterationsDone - S_n[i]))) * CoefH)^(1/3)
-        if T_n < tmp 
-            T_n = tmp 
-        end
-        histo[i] = S_n[i]
+    for i in 1:NbOfStates 
+        S_ntemp[i] = S_n[i] / iterationsDone
     end
-    minimaliteration = Int64(ceil(T_n)) # this is the updated minimal value given what we have observed do far.
-
-    # We now estimate the total derivate of fun over the frequencies in array histo
-    totalderiv = float64(0.0)
-    for i in 1:NbOfStates
-        h0 = histo[i]
-        b1 = max(0, histo[i]-Δ)
-        histo[i] = b1
-        fmin = fun(histo)
-        b2 = min(1, histo[i]+Δ)
-        histo[i] = b2
-        fmax = fun(histo)
-        histo[i] = h0
-        deriv = (fmax - fmin) /(b2 - b1)
-        deriv = Deriv^2 * (h0 * (1-h0)) / iterationsDone
-        totalderiv += deriv
-    end
+    valuefun = fun(S_ntemp, iterationsDone)
+    totalderiv = totalderivative(fun, S_ntemp, Δ, iterationsDone)
+    println("totalderiv= ", totalderiv)
+    minimaliteration = Int64(ceil(totalderiv * CoefH)) # this is the updated minimal value given what we have observed do far.
     
     if verbose
-        println("$(iterationsDone) iterations done, whereas max(T_n) is equal to $(minimaliteration).")
+        println(iterationsDone, " iterations done. fun()=", valuefun, 
+            " whereas the minimal required number of iterations is equal to ", minimaliteration)
         if iterationsDone >= minimaliteration
             println("So we can stop")
         else
@@ -107,52 +81,99 @@ function shootuntil(fun::Function, circuit::QuantumCircuit, Δ::Float64, γ::Flo
     # We will now iterate until the stopping T_n is reached. At each step, T_n is reevaluated (increased).
     while iterationsDone < minimaliteration
         iterationsLeft = minimaliteration - iterationsDone
-        Result = Snowflake.simulate_shots(circuit, iterationsLeft)
-        for iter ∈ 1:iterationsLeft
-            value = 0
-            n = 1<<(circuit.qubit_count-1)
-            for ch in Result[iter]
-                if ch == '1' 
-                    value = value + n 
-                end
-                n = n>>1
-            end
-            S_n[value-1] = S_n[value-1] + 1
-        end
+        # The following line is a trick based on experience. At the end the process tends to run several time shots of size 1
+        # By setting it to 10 as a minimal value, we may do a few extra sots but will get out of the loop faster.
+        if iterationsLeft < 10 iterationsLeft = 10 end  
+        result = Snowflake.simulate_shots(circuit, iterationsLeft)
+        buildfreq!(S_n, result, circuit.qubit_count)
 
         iterationsDone = minimaliteration
-        for i in 1:NbOfStates
-            tmp = ((S_n[i] * ((iterationsDone - S_n[i]))) * CoefH)^(1/3)
-            if T_n < tmp 
-                T_n = tmp 
-            end 
+        for i in 1:NbOfStates 
+            S_ntemp[i] = S_n[i] / iterationsDone
         end
-
-        iterationsDone = minimaliteration
-        minimaliteration = Int64(ceil(T_n))
+        valuefun = fun(S_ntemp, iterationsDone)
+        totalderiv = totalderivative(fun, S_ntemp, Δ, iterationsDone)
+        minimaliteration = Int64(ceil(totalderiv * CoefH))
             
         if verbose
-            println("$(iterationsDone) done, whereas T_n is equal to $(Int64(ceil(T_n))).")
+            println(iterationsDone, " iterations done. fun()=", valuefun, 
+            " whereas the minimal required number of iterations is equal to ", minimaliteration)
         end
     end
     
     if verbose
         println("We're done\n")
         println("Final number of iterations = $(iterationsDone)")
-        println("Finalproportions = $(S_n)")
-    end
-
-    for i in 1:NbOfStates
-        S_n[i] = S_n[i] / Float64(iterationsDone)
-    end
-    
-    if verbose
-        println("Final relative proportions = $(S_n)")
     end
 
     ψ = Snowflake.simulate(circuit)
     println(ψ)
-    return(S_n)
+    return(S_n, iterationsDone)
+end
+
+function buildfreq!(S_n::Vector{Int64}, result::Vector{String}, qubit_count::Int)
+    for iter ∈ 1:length(result)
+        value = Int64(0)
+        n = 1<<(qubit_count-1)
+        for ch in result[iter]
+            if ch == '1' 
+                value = value + n 
+            end
+            n = n>>1
+        end
+        S_n[value+1] = S_n[value+1] + 1
+    end
+    
+    for iter ∈ 1:length(S_n)
+        println("S_n[", iter, "]=",S_n[iter])
+    end
+    return nothing
+end
+
+function totalderivative(fun::Function, S_ntemp::Vector{Float64}, Δ::Float64, iterationsDone::Int64)::Float64
+    totalderiv = Float64(0.0)
+    for i in 1:length(S_ntemp)
+        h0 = S_ntemp[i]
+        b1 = max(0, S_ntemp[i]-Δ)
+        S_ntemp[i] = b1
+        fmin = fun(S_ntemp, iterationsDone)
+        b2 = min(1, S_ntemp[i]+Δ)
+        S_ntemp[i] = b2
+        fmax = fun(S_ntemp, iterationsDone)
+        S_ntemp[i] = h0   # reset frequency to correct value
+        deriv = (fmax - fmin) /(b2 - b1)
+        S_n = S_ntemp[i] * iterationsDone
+        deriv = deriv^2 * (S_n * (iterationsDone - S_n))
+        println("b1=", b1, " b2=", b2, " fmin=", fmin, " fmax=", fmax, " deriv=", deriv, " S_n=", S_n)
+        totalderiv += deriv
+    end
+    return totalderiv
+end
+
+# This function is only a wrapper for qubitprop((histo::Array{Float64}, iterations::Int, qubit::Int)::Float64
+# the value of "qubit" in the first line needs to be adjusted. The variable "iterations" is also droped because 
+# it is not used in this case.
+export qubitprop
+function qubitprop(histo::Vector{Float64}, iterations::Int64)::Float64
+    bidon = iterations
+    qubit = Int64(1)
+    return qubitpropV2(histo, qubit)
+end
+
+# This is a simple example of a function that can be calles with shootuntil.
+# It simply returns the observed relative frequency that qubit number "qubit" was equal to 1.
+function qubitpropV2(histo::Vector{Float64}, qubit::Int64)::Float64
+    prop = Float64(0.0)
+    n = 1 << (qubit-1)
+    println("qubit=", qubit, " n=", n)
+    for i in 1:length(histo)
+        if (i & n) == true
+            print(i, " ")
+            prop = prop + histo[i]
+        end
+    end
+    print("\n")
+    return prop 
 end
 
 export SampleSize

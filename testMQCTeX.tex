@@ -1,0 +1,23 @@
+\documentclass{standalone}
+\usepackage{tikz}
+\usetikzlibrary{quantikz}
+\begin{document}
+
+\begin{quantikz}[transparent, column sep=1cm, row sep={1cm,between origins}]
+& & & & & & & \\ 
+& & \gate[wires=12, label style={yshift=6.0cm}]{\mbox{Circuit 1}} & \gate[wires=12, label style={yshift=6.0cm}]{\mbox{Circuit 2}} & \gate[wires=12, label style={yshift=6.0cm}]{\mbox{Circuit 3}} & \gate[wires=12, label style={yshift=6.0cm}]{\mbox{Circuit 4}} & \gate[wires=12, label style={yshift=6.0cm}]{\mbox{Circuit 5}} & & \\ 
+\lstick[wires=10]{\ket{\Phi}} 
+& \lstick{ wire 1} & \gateinput{qb=1} & \linethrough & \linethrough & \linethrough & \linethrough & \qw \rstick[wires=10]{\ket{\Psi}} \\ 
+& \lstick{ wire 2} & \gateinput{qb=2} & \gateinput{qb=1} & \linethrough & \linethrough & \linethrough & \qw \\ 
+& \lstick{ wire 3} & \gateinput{qb=3} & \gateinput{qb=2} & \gateinput{qb=1} & \linethrough & \linethrough & \qw \\ 
+& \lstick{ wire 4} & \gateinput{qb=4} & \gateinput{qb=3} & \gateinput{qb=2} & \gateinput{qb=1} & \gateinput{qb=3} & \qw \\ 
+& \lstick{ wire 5} & \linethrough & \gateinput{qb=4} & \gateinput{qb=3} & \gateinput{qb=2} & \linethrough & \qw \\ 
+& \lstick{ wire 6} & \linethrough & \linethrough & \gateinput{qb=4} & \gateinput{qb=3} & \gateinput{qb=2} & \qw \\ 
+& \lstick{ wire 7} & \linethrough & \linethrough & \linethrough & \gateinput{qb=4} & \gateinput{qb=5} & \qw \\ 
+& \lstick{ wire 8} & \linethrough & \linethrough & \linethrough & \linethrough & \gateinput{qb=1} & \qw \\ 
+& \lstick{ wire 9} & \linethrough & \linethrough & \linethrough & \linethrough & \gateinput{qb=4} & \qw \\ 
+& \lstick{ wire 10} & \linethrough & \linethrough & \linethrough & \linethrough & \gateinput{qb=6} & \qw \\ 
+& & & & & & & 
+\end{quantikz}
+\end{document}
+

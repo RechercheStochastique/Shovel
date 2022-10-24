@@ -4,6 +4,13 @@
     // Pour plus d'informations, visitez : https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+    {
+        "type": "julia",
+        "request": "launch",
+        "name": "Launch Julia tests",
+        "program": "${workspaceFolder}/test/runtests.jl",
+        "stopOnEntry": true
+    },
         {
             "type": "julia",
             "request": "launch",
