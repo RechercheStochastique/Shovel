@@ -1,117 +1,227 @@
+export shootuntilresult
+"""
+shootuntilresult is a structure containing the results of shootuntil function. It is intended to be reused 
+    by another package to perform analysis. 
+# Members
+- γ::Float64
+- Δ::Float64
+- circuit::QuantumCircuit
+- samplesize::Int64
+- Proportions::Vector{Float64}
+- funvalue::Float64
+- variancefun::Float64
+"""
+struct shootuntilresult
+    γ::Float64
+    Δ::Float64
+    circuit::QuantumCircuit
+    samplesize::Int64
+    Proportions::Vector{Float64}
+    funvalue::Float64
+    variancefun::Float64
+end
+
+function printshootresult(io::IO, shrslt::shootuntilresult)
+    println(io, "γ=", shrslt.γ)
+    println(io, "Δ =", shrslt.Δ)
+    print(io, "Circuit: ")
+    printlightQC(io, shrslt.circuit)
+    println(io, "Number of shots=", shrslt.samplesize)
+    println(io, "Proportions:")
+    println(io, shrslt.Proportions)
+    println(io, "Estimated value of function=", shrslt.funvalue)
+    println(io, "Variance of estimate=", shrslt.variancefun)
+end
+
+Base.show(io::IO, shrslt::shootuntilresult) = printshootresult(io, shrslt)
+
 export shootuntil
 """
-shootuntil(fun::function, circuit::QuantumCircuit, Δ::Float64, γ::Float64, verbose=false)
+function shootuntil(fun::Function, circuit::QuantumCircuit, Δ::Float64, γ::Float64, linearcoef::Vector{Float64}, verbose=false, estimate=false)::shootuntilresult
+or
+function shootuntil(circuit::QuantumCircuit, Δ::Float64, γ::Float64, linearcoef::Vector{Float64}, verbose=false, estimate=false)::shootuntilresult
 
 Runs a circuit until there is a probability 1-γ that the precision Δ is reached
 for each of the state measurements.
 # Arguments
-- `fun::function : is a function you want to calculate on the resulting proportion estimate on the final state of the circuit.`
-`The function must take an array of Float64 as and input and return a Float64`
+- `fun::function : is a function you want to calculate on the resulting proportion estimate on the final state of the circuit. For instance "sqrt" to get |α| instead of |α|^2`
+`The function must take a Float64 as and input and return a Float64`
 - `circuit::QuantumCircuit`: a QuantumCircuit as defined by Snowflake
 - `Δ::Float64`: the difference between the real value and the estimation
-- `γ::Float64`: the probability that the estimator is more that Δ apart from the true value. 
+- `γ::Float64`: the probability that the estimator is more that Δ apart from the true value.
+- `linearcoef::Vector{Float64}`  : a vector of size 2^q, where q is the number of qubit in the circuit (q=circuit.qubit_count).`
+`It is a linear combination of the probabilities of the possible bit states after measurement.`
 For more details please see [here](Stop/index.html).
 - `verbose::boolean`: println usefull information on screen if needed for estimating suitable for Δ and γ. 
+- `estimate::boolean` : this will prevent the fuction to run past the log(1-γ)/log(1-Δ) limit which is enough to get a rough estimation of the number of shots required to reach the desired precision.
 # Example
 ```julia-repl
-julia> shootuntil(fun, circuit, 0.001, 0.10, sqrt)
-1
+julia> coeflin = [1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0]
+julia> result = shootuntil(c1, 0.001, 0.05, coeflin, true)
+julia> println(result)
 ```
 """
-function shootuntil(fun::Function, circuit::QuantumCircuit, Δ::Float64, γ::Float64, verbose=false)
-    iterations = Int64(0)
+function shootuntil(fun::Function, circuit::QuantumCircuit, Δ::Float64, γ::Float64, linearcoef::Vector{Float64}, verbose=false, estimate=false, ignorefun::Bool=false)::shootuntilresult
     NbOfStates = Int(2^circuit.qubit_count)
-    S_n = zeros(Int64, NbOfStates)
-    S_ntemp = zeros(Float64, NbOfStates)
-    worst = Int64(0)
-    minimaliteration = Int64(0)
-    iterationsDone = Int64(0)
+    absfreq = zeros(Int64, NbOfStates)
+    relfreq = zeros(Float64, NbOfStates)
+    iterationsmin = Int64(0)
+    iterationsdone = Int64(0)
     iterationsLeft = Int64(0)
-    totalderiv = Float64(0.0)
+    funvalue = Float64(0.0)
+    derivfun = Float64(0.0)
+    innerproduct = Float64(0.0)
+    σ = Float64(0.0)
+    shootresult = shootuntilresult(γ, Δ, circuit, iterationsdone, relfreq, funvalue, derivfun * derivfun * σ )
 
-    if hasmethod(fun, [Vector{Float64}, Int64]) != true 
-        error("The function $(fun) does not have the proper format fun(::Vector{Float64}, ::Int64)::Float64")
-        return nothing
+    if ignorefun == false
+        if hasmethod(fun, [Float64]) != true 
+            error("Function $(fun) does not have the proper format fun(::Float64)")
+            return shootresult
+        end
+        if typeof(fun(0.5)) != Float64
+            error("Function $(fun) does not return a Float64")
+            return shootresult
+        end
     end
-    test = Vector{Float64}(undef, NbOfStates)
-    test[1:end] .= 1.0/NbOfStates
-    if typeof(fun(test, 0)) != Float64
-        error("The provided function does not return a Float64")
-        return nothing
+    if length(linearcoef) != NbOfStates
+        error("The linear combinaison does not have the proper length")
+        return shootresult
     end
+    
+    if estimate == true verbose = true end # seems logical to spit all info if this is just an estimate.
 
-    minimaliteration = Int64(ceil(log(1-γ)/log(1-Δ)))
-    if verbose println("Minimal number of iteration = $(minimaliteration)") end
-    CoefH = H(γ,Δ)
+    # We now perform the minimal number of shots
+    iterationsmin = Int64(ceil(log(1-γ)/log(1-Δ)))
+    if verbose println("Minimal number of iteration = $(iterationsmin)") end
+    CoefH = (quantile.(Normal(),(1-γ/2)) / Δ)^2 # i.e. H(γ,Δ)
     if verbose println("Coefficient H(γ,Δ) = $(CoefH)") end
-    worst = Int64(ceil(CoefH/4.0))
-    if verbose println("Worst case, we do $(worst) iterations") end
     #=
     owner = ENV["USERNAME"]
     token = "token_bidon" # ENV["SNOWFLAKE_TOKEN"]
     host = "local" #ENV["SNOWFLAKE_HOST"]
     =#
-    FinalProp = Float64(0)
-    
-    # We first do the minimal number of iteration
-    result = Snowflake.simulate_shots(circuit, minimaliteration)
+    result = Snowflake.simulate_shots(circuit, iterationsmin)
+    iterationsdone = iterationsmin
     # Now we build the resulting frequency table
-    buildfreq!(S_n, result, circuit.qubit_count)
-    iterationsDone = minimaliteration
+    buildfreq!(absfreq, result, circuit.qubit_count)
 
-    # We now compute the functions on the observed frequencies and estimate the derivative
+    # We compute the functions on the observed frequencies and estimate the derivative
     for i in 1:NbOfStates 
-        S_ntemp[i] = S_n[i] / iterationsDone
+        relfreq[i] = absfreq[i] / iterationsdone
     end
-    valuefun = fun(S_ntemp, iterationsDone)
-    totalderiv = totalderivative(fun, S_ntemp, Δ, iterationsDone)
-    println("totalderiv= ", totalderiv)
-    minimaliteration = Int64(ceil(totalderiv * CoefH)) # this is the updated minimal value given what we have observed do far.
+    # We compute the linear combinaison of the frequencies
+    innerproduct = dot(relfreq, linearcoef)
+    # Now the function of the linear combination
+    if (ignorefun == true)
+        funvalue = innerproduct
+        derivfun = 1.0
+    else
+        funvalue = fun(innerproduct)
+        derivfun = (fun(innerproduct + Δ) - fun(innerproduct - Δ)) / (2.0*Δ)
+    end
+    σ = sigmalin(relfreq, linearcoef)
+    iterationsmin = Int64(ceil(derivfun * derivfun * σ * CoefH)) # this is the updated minimal value given what we have observed do far.
     
     if verbose
-        println(iterationsDone, " iterations done. fun()=", valuefun, 
-            " whereas the minimal required number of iterations is equal to ", minimaliteration)
-        if iterationsDone >= minimaliteration
-            println("So we can stop")
-        else
-            println("We need to continue")
+        println(iterationsdone, " iterations done. fun()=", funvalue)
+        println("linear combinaison=", innerproduct, " fun(linear combinaison)=", funvalue, " derivative fun=", derivfun)
+        println("The estimated required number of iterations is equal to ", iterationsmin)
+        if estimate == false
+            if iterationsdone >= iterationsmin
+                println("So we can stop")
+                shootresult = shootuntilresult(γ, Δ, circuit, iterationsdone, relfreq, funvalue, derivfun * derivfun * σ )
+                return shootresult
+            else
+                println("We need to continue")
+            end
         end
     end
 
-    # We will now iterate until the stopping T_n is reached. At each step, T_n is reevaluated (increased).
-    while iterationsDone < minimaliteration
-        iterationsLeft = minimaliteration - iterationsDone
+    # If estimate is true, then we'll not go further.
+    shootresult = shootuntilresult(γ, Δ, circuit, iterationsdone, relfreq, funvalue, derivfun * derivfun * σ )
+    if estimate == true 
+        return shootresult 
+    end
+
+    # We will now iterate until the stopping reached. At each step the criteria is reevaluated (increased).
+    while iterationsdone < iterationsmin
+        iterationsLeft = iterationsmin - iterationsdone
+        # THe following line is to avoid overshooting. So instead of doing "iterationsLeft" we will do only half of them
+        if (iterationsLeft > 2000) 
+            iterationsLeft = iterationsLeft >> 1 
+        end
         # The following line is a trick based on experience. At the end the process tends to run several time shots of size 1
         # By setting it to 10 as a minimal value, we may do a few extra sots but will get out of the loop faster.
-        if iterationsLeft < 10 iterationsLeft = 10 end  
+        if iterationsLeft < 10 iterationsLeft = 10 end
         result = Snowflake.simulate_shots(circuit, iterationsLeft)
-        buildfreq!(S_n, result, circuit.qubit_count)
-
-        iterationsDone = minimaliteration
+        iterationsdone = iterationsdone + iterationsLeft
+        
+        buildfreq!(absfreq, result, circuit.qubit_count)
         for i in 1:NbOfStates 
-            S_ntemp[i] = S_n[i] / iterationsDone
+            relfreq[i] = absfreq[i] / iterationsdone
         end
-        valuefun = fun(S_ntemp, iterationsDone)
-        totalderiv = totalderivative(fun, S_ntemp, Δ, iterationsDone)
-        minimaliteration = Int64(ceil(totalderiv * CoefH))
-            
+
+        # We compute the linear combinaison of the frequencies
+        innerproduct = dot(relfreq, linearcoef)
+        # Now the function of the linear combination
+        if (ignorefun == true)
+            funvalue = innerproduct
+            derivfun = 1.0
+        else
+            funvalue = fun(innerproduct)
+            derivfun = (fun(innerproduct + Δ) - fun(innerproduct - Δ)) / (2.0*Δ)
+        end
+        σ = sigmalin(relfreq, linearcoef)
+        iterationsmin = Int64(ceil(derivfun * derivfun * σ * CoefH)) # this is the updated minimal value given what we have observed do far.
+           
         if verbose
-            println(iterationsDone, " iterations done. fun()=", valuefun, 
-            " whereas the minimal required number of iterations is equal to ", minimaliteration)
+            println(iterationsdone, " iterations done. fun()=", funvalue)
+            println("linear combinaison=", innerproduct, " fun(linear combinaison)=", funvalue, " derivative fun=", derivfun)
+            println("The estimated required number of iterations is equal to ", iterationsmin)
         end
     end
     
     if verbose
         println("We're done\n")
-        println("Final number of iterations = $(iterationsDone)")
+        println("Final number of iterations = $(iterationsdone)")
     end
 
-    ψ = Snowflake.simulate(circuit)
-    println(ψ)
-    return(S_n, iterationsDone)
+    #ψ = Snowflake.simulate(circuit)
+    #println(ψ)
+
+    shootresult = shootuntilresult(γ, Δ, circuit, iterationsdone, relfreq, funvalue, derivfun * derivfun * σ )
+    return shootresult
 end
 
-function buildfreq!(S_n::Vector{Int64}, result::Vector{String}, qubit_count::Int)
+function shootuntil(fun::Function, circuit::QuantumCircuit, Δ::Float64, γ::Float64, linearcoef::Vector{Float64}, verbose=false, estimate=false)::shootuntilresult
+    return shootuntil(fun, circuit, Δ, γ, linearcoef, verbose, estimate, false)
+end
+
+function shootuntil(circuit::QuantumCircuit, Δ::Float64, γ::Float64, linearcoef::Vector{Float64}, verbose=false, estimate=false)::shootuntilresult
+    # The function "x->x" below is bogus bacause the last argument has value "true", so shootuntil will ignore it
+    return shootuntil(x -> x, circuit, Δ, γ, linearcoef, verbose, estimate, true) 
+end
+
+function sigmalin(relfreq::Vector{Float64}, linearcoef::Vector{Float64})::Float64
+    σ = 0.0
+    innerproduct = Float64(0.0)
+
+    if (length(relfreq) != length(linearcoef))
+        error("relfreq and linearcoef are not of the same size")
+        return nothing
+    end
+    innerproduct = dot(relfreq, linearcoef)
+
+    for i in 1:length(relfreq)
+        σ = σ + linearcoef[i] * relfreq[i] * linearcoef[i]
+    end
+    σ = σ - (innerproduct * innerproduct)
+
+    return(σ)
+end
+
+function buildfreq!(absfreq::Vector{Int64}, result::Vector{String}, qubit_count::Int)
     for iter ∈ 1:length(result)
         value = Int64(0)
         n = 1<<(qubit_count-1)
@@ -121,99 +231,13 @@ function buildfreq!(S_n::Vector{Int64}, result::Vector{String}, qubit_count::Int
             end
             n = n>>1
         end
-        S_n[value+1] = S_n[value+1] + 1
+        absfreq[value+1] = absfreq[value+1] + 1
     end
-    
-    for iter ∈ 1:length(S_n)
-        println("S_n[", iter, "]=",S_n[iter])
-    end
+
     return nothing
 end
 
-function totalderivative(fun::Function, S_ntemp::Vector{Float64}, Δ::Float64, iterationsDone::Int64)::Float64
-    totalderiv = Float64(0.0)
-    for i in 1:length(S_ntemp)
-        h0 = S_ntemp[i]
-        b1 = max(0, S_ntemp[i]-Δ)
-        S_ntemp[i] = b1
-        fmin = fun(S_ntemp, iterationsDone)
-        b2 = min(1, S_ntemp[i]+Δ)
-        S_ntemp[i] = b2
-        fmax = fun(S_ntemp, iterationsDone)
-        S_ntemp[i] = h0   # reset frequency to correct value
-        deriv = (fmax - fmin) /(b2 - b1)
-        S_n = S_ntemp[i] * iterationsDone
-        deriv = deriv^2 * (S_n * (iterationsDone - S_n))
-        println("b1=", b1, " b2=", b2, " fmin=", fmin, " fmax=", fmax, " deriv=", deriv, " S_n=", S_n)
-        totalderiv += deriv
-    end
-    return totalderiv
-end
-
-# This function is only a wrapper for qubitprop((histo::Array{Float64}, iterations::Int, qubit::Int)::Float64
-# the value of "qubit" in the first line needs to be adjusted. The variable "iterations" is also droped because 
-# it is not used in this case.
-export qubitprop
-function qubitprop(histo::Vector{Float64}, iterations::Int64)::Float64
-    bidon = iterations
-    qubit = Int64(1)
-    return qubitpropV2(histo, qubit)
-end
-
-# This is a simple example of a function that can be calles with shootuntil.
-# It simply returns the observed relative frequency that qubit number "qubit" was equal to 1.
-function qubitpropV2(histo::Vector{Float64}, qubit::Int64)::Float64
-    prop = Float64(0.0)
-    n = 1 << (qubit-1)
-    println("qubit=", qubit, " n=", n)
-    for i in 1:length(histo)
-        if (i & n) == true
-            print(i, " ")
-            prop = prop + histo[i]
-        end
-    end
-    print("\n")
-    return prop 
-end
-
-export SampleSize
-"""
-SampleSize(c::QuantumCircuit)::Int64
-
-Calculate the sample size (number of shots) required to reach, with probability 1-γ, a difference not exceeding Δ between
-``|\\alpha_i|^2|`` and the observed proportion ``p_i`` for all possible states in the sample.
-
-# Arguments
-- `c::QuantumCircuit`: is a Snowflake cirquit.
-
-The function return a positive integer
-"""
-function SampleSize(c::QuantumCircuit, Δ::Float64, γ::Float64)::Int64
-    worst = Int64(0)
-
-    CoefH = H(γ,Δ)
-    ψ = Snowflake.simulate(c)
-    for α in ψ
-        p = abs(α)^2
-        n = Int64(ceil(p*(1-p) * CoefH))
-        if worst < n worst = n end
-    end
-    return worst
-end
-
-export StatesProportions
-"""
-StatesProportions is a structure containing the description and actual proportions of each state after a simulation 
-"""
-struct StatesProportions
-    Value::String
-    Proportion::Float64
-end
-
-" Ajusting factor for the stopping rule"
-function H(γ, Δ)::Float64
-    X = Normal()
-    ϕ =quantile.(Normal(),(1-γ/2))
-    ϕ = Float64((ϕ/Δ)^2.0)
-    return ϕ
+# Ajusting factor for the stopping rule
+function H(::Float64, Δ::Float64)::Float64
+    return (quantile.(Normal(),(1-γ/2)) / Δ)^2
 end

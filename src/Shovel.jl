@@ -5,6 +5,7 @@ using Revise
 using Snowflake
 using Distributions
 using Match
+using LinearAlgebra
 
 include("Stop.jl")
 include("MQC.jl")

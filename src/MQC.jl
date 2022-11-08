@@ -11,7 +11,7 @@ struct Plug
 end
 
 function printPlug(io::IO, plg::Plug)
-    println("Circuit id: ", plg.circuit.id, "   qubit: ", plg.qubit)
+    println(io, "Circuit id: ", plg.circuit.id, "   qubit: ", plg.qubit)
 end
 
 Base.:(==)(plg1::Plug, plg2::Plug) = ((plg1.circuit == plg2.circuit && plg1.qubit == plg2.qubit) ? true : false)
