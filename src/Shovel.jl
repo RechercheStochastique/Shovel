@@ -10,5 +10,6 @@ using LinearAlgebra
 include("Stop.jl")
 include("MQC.jl")
 include("ToLaTeX.jl")
+include("InitProb.jl")
 
 end # module Shovel

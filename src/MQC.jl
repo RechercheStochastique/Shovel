@@ -1,7 +1,10 @@
 export Plug
 """
+    Plug(c::QuantumCircuit, qb::Int)
+
 Plug is a structure containing the UUID of a circuit and a qubit number. It is the basic element of a Connector.
 The only validation done is that the qubit number of the circuit is valid (>0 and <=qubit_count).
+
 The operator "==" is defined for plugs.
 """
 struct Plug
@@ -21,9 +24,13 @@ Base.show(io::IO, plg::Plug) = printPlug(io, plg)
 
 export Connector
 """
+    Connector(plg1::Plug, plg2::Plug)
+    Connector(c1::QuantumCircuit, qb1::Int, c2::QuantumCircuit, qb2::Int)
+
 Connector is a structure containing two plugs: 1) the input plug which is when the qubit/circuit is coming from and 2) the output plug indicating
 to which qubit/circuit it is going to.
 Users can either create plugs and then a connector from them or directly create a connector by providing the circuit and the qubit.
+
 The operator "==" is defined for connector_list.
 """
 mutable struct Connector
@@ -68,8 +75,7 @@ export isbefore
 """
 isbefore(connec1::Connector, connec2::Connector)::Bool 
 
-A function to checks if the output plug of connec1 is the same as the input plug of connec2.
-    if true, it means that connec1 is just before connec2 and they are connected together in the same wire.
+A function to checks if the output plug of connec1 is the same as the input plug of connec2. If true, it means that connec1 is just before connec2 and they are connected together in the same wire.
 """
 function isbefore(connec1::Connector, connec2::Connector)::Bool
     if connec1.plugout == connec2.plugin
@@ -123,34 +129,38 @@ mutable struct CircuitPosition
     CircuitPosition(circuit::QuantumCircuit) = new(circuit, 1)
 end
 
-export MQC
+export shMQC
 """
-The structure MQC is the main element of the Meta Quantum Circuit utility.
+    shMQC()
+
+The structure shMQC is the main element of the Meta Quantum Circuit utility.
 After adding quantum circuits (or "circuits" for short) and connector_list, a quantikz/LaTeX file can be produced.
 Most importantly, a new circuit can be generated from the MQC. 
 """
-struct MQC
+struct shMQC
     circuit_list::Vector{QuantumCircuit}
     connector_list::Vector{Connector}
     wire_list::Vector{Wire}
     MQC() = new(Vector{QuantumCircuit}(), Vector{Connector}(), Vector{Wire}())
 end
 
-export printlightQC
+export shprintlightQC
 """
-printlightQC(io::IO, circuit::QuantumCircuit)
+    shprintlightQC(io::IO, circuit::QuantumCircuit)
+
 A quick display of basic info on a QuantumCircuit
 """
-function printlightQC(io::IO, circuit::QuantumCircuit)
+function shprintlightQC(io::IO, circuit::QuantumCircuit)
     println(io, "circuit id: ", circuit.id, "  qubit_count = ", circuit.qubit_count, "  pipeline size = ", length(circuit.pipeline))
 end
 
-export printMQC
+export printshMQC
 """
-printMQC(io::IO, mqc::MQC)
-Summary print of what's inside a MQC
+    printshMQC(io::IO, mqc::shMQC)
+
+Summary print of what's inside a shMQC
 """
-function printMQC(io::IO, mqc::MQC)
+function printshMQC(io::IO, mqc::shMQC)
     println(io, "\nThe MQC is made of these circuits:")
     for circuit in mqc.circuit_list
         printlightQC(io, circuit)
@@ -166,17 +176,19 @@ function printMQC(io::IO, mqc::MQC)
 end
 
 
-Base.show(io::IO, mqc::MQC) = printMQC(io, mqc)
+Base.show(io::IO, mqc::shMQC) = printshMQC(io, mqc)
 
-export MQCAddCircuit
+export shMQCAddCircuit
 """
-MQCAddCircuit(mqc::MQC, newc::QuantumCircuit)::Bool 
+    shMQCAddCircuit(mqc::MQC, newc::QuantumCircuit)::Bool 
 
-This function is used to add a Snowflake QuantumCircuit to an MQC.
-    A given circuit cannot be add twice ot the MQC. However, two distinct circuits with identical circuitry can.
-    The function will retrun true if the addition was successful.
+This function is used to add a Snowflake QuantumCircuit to an shMQC.
+
+A given circuit cannot be add twice ot the shMQC. However, two distinct circuits with identical circuitry can.
+
+The function will retrun true if the addition was successful.
 """
-function MQCAddCircuit(mqc::MQC, newc::QuantumCircuit)::Bool
+function shMQCAddCircuit(mqc::shMQC, newc::QuantumCircuit)::Bool
     # check if circuit is already there
     for c in mqc.circuit_list
         if newc.id == c.id
@@ -189,14 +201,13 @@ function MQCAddCircuit(mqc::MQC, newc::QuantumCircuit)::Bool
     return true
 end
 
-export MQCAddConnector
+export shMQCAddConnector
 """
-MQCAddConnector(mqc::MQC, connec::Connector)::Bool 
+    shMQCAddConnector(mqc::shMQC, connec::Connector)::Bool 
 
-This function is used to add a connector to an MQC. It has some consistancy checks and will return
-    false if the proposed connector creates inconsistencies such as circular circuitry or duplicate plugs.
+This function is used to add a connector to an MQC. It has some consistancy checks and will return false if the proposed connector creates inconsistencies such as circular circuitry or duplicate plugs.
 """
-function MQCAddConnector(mqc::MQC, connec::Connector)::Bool
+function shMQCAddConnector(mqc::shMQC, connec::Connector)::Bool
     # Check if Plug is acceptable.
     # Firstly, are the circuits and plugs existant.
 
@@ -300,12 +311,12 @@ function MQCAddConnector(mqc::MQC, connec::Connector)::Bool
 end
 
 """
-findwire!(mqc::MQC)
+    findwire!(mqc::shMQC)
 
 Builds the wires of the MQC. Provided for sake of completeness. Users should not need it in normal circumstances. Returns nothing
 The "sew" function uses it.
 """
-function findwire!(mqc::MQC)
+function findwire!(mqc::shMQC)
     nbwire = Int(0)
     pseudoplugin_list = Vector{Plug}()
     pseudoplugout_list = Vector{Plug}()
@@ -402,7 +413,7 @@ function findwire!(mqc::MQC)
     return nothing
 end
 
-function position!(mqc::MQC)::Vector{CircuitPosition}
+function position!(mqc::shMQC)::Vector{CircuitPosition}
     
     circuitposi_list = Vector{CircuitPosition}()
 
@@ -453,6 +464,11 @@ function position!(mqc::MQC)::Vector{CircuitPosition}
 
 end
 
+"""
+    safecopy(oldpipe)::Vector{Gate}
+
+Will take the pipeline inside a QuantumCircuit and return a copy of it. This is a "true" copy occupying a new memory chunck.
+"""
 function safecopy(oldpipe)::Vector{Gate}
     newpipe = Vector{Gate}()
     newdispsym = copy(oldpipe[1].display_symbol)
@@ -466,13 +482,13 @@ function safecopy(oldpipe)::Vector{Gate}
     return newpipe
 end
 
-export sew
+export shsew
 """
-sew(mqc::MQC)
+    shsew(mqc::shMQC)::QuantumCircuit
 
-This function turns an MQC into a standard Snowflake QuantumCircuit
+This function takes an MQC returns a standard Snowflake QuantumCircuit equivalent.
 """
-function sew(mqc::MQC)::QuantumCircuit
+function shsew(mqc::shMQC)::QuantumCircuit
     findwire!(mqc)
     circuitposi_list = position!(mqc)
 

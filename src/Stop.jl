@@ -36,24 +36,36 @@ end
 Base.show(io::IO, shrslt::shootuntilresult) = printshootresult(io, shrslt)
 
 export shootuntil
+#=
 """
-function shootuntil(fun::Function, circuit::QuantumCircuit, Δ::Float64, γ::Float64, linearcoef::Vector{Float64}, verbose=false, estimate=false)::shootuntilresult
-or
-function shootuntil(circuit::QuantumCircuit, Δ::Float64, γ::Float64, linearcoef::Vector{Float64}, verbose=false, estimate=false)::shootuntilresult
+    shootuntil(fun::Function, circuit::QuantumCircuit, Δ::Float64, γ::Float64, linearcoef::Vector{Float64}, verbose=false, estimate=false)::shootuntilresult
 
-Runs a circuit until there is a probability 1-γ that the precision Δ is reached
-for each of the state measurements.
+Runs a circuit until there is a probability 1-γ that the precision Δ is reached for each of the state measurements.
 # Arguments
-- `fun::function : is a function you want to calculate on the resulting proportion estimate on the final state of the circuit. For instance "sqrt" to get |α| instead of |α|^2`
-`The function must take a Float64 as and input and return a Float64`
+- `fun::function : is a function you want to calculate on the resulting proportion estimate on the final state of the circuit. For instance "sqrt" to get |α| instead of |α|^2
+The function must take a Float64 as and input and return a Float64`
 - `circuit::QuantumCircuit`: a QuantumCircuit as defined by Snowflake
 - `Δ::Float64`: the difference between the real value and the estimation
 - `γ::Float64`: the probability that the estimator is more that Δ apart from the true value.
-- `linearcoef::Vector{Float64}`  : a vector of size 2^q, where q is the number of qubit in the circuit (q=circuit.qubit_count).`
-`It is a linear combination of the probabilities of the possible bit states after measurement.`
-For more details please see [here](Stop/index.html).
+- `linearcoef::Vector{Float64}`  : a vector of size 2^q, where q is the number of qubit in the circuit (q=circuit.qubit_count). It is a linear combination of the probabilities of the possible bit states after measurement. For more details please see [here](Stop/index.html).
 - `verbose::boolean`: println usefull information on screen if needed for estimating suitable for Δ and γ. 
-- `estimate::boolean` : this will prevent the fuction to run past the log(1-γ)/log(1-Δ) limit which is enough to get a rough estimation of the number of shots required to reach the desired precision.
+- `estimate::boolean` : this will prevent the fuction to run past the log(1-γ)/log(1-Δ) limit which is enough to get a rough estimation of the number of shots required 
+to reach the desired precision.
+# Example
+```julia-repl
+julia> coeflin = [1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0]
+julia> result = shootuntil(sqrt, c1, 0.001, 0.05, coeflin, true)
+julia> println(result)
+```
+"""
+function shootuntil(fun::Function, circuit::QuantumCircuit, Δ::Float64, γ::Float64, linearcoef::Vector{Float64}, verbose=false, estimate=false)::shootuntilresult
+    return shootuntil(fun, circuit, Δ, γ, linearcoef, verbose, estimate, false)
+end
+=#
+"""
+    shootuntil(circuit::QuantumCircuit, Δ::Float64, γ::Float64, linearcoef::Vector{Float64}, verbose=false, estimate=false)::shootuntilresult
+
+Same as the other method except that no function is provided.
 # Example
 ```julia-repl
 julia> coeflin = [1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0]
@@ -61,7 +73,17 @@ julia> result = shootuntil(c1, 0.001, 0.05, coeflin, true)
 julia> println(result)
 ```
 """
-function shootuntil(fun::Function, circuit::QuantumCircuit, Δ::Float64, γ::Float64, linearcoef::Vector{Float64}, verbose=false, estimate=false, ignorefun::Bool=false)::shootuntilresult
+function shootuntil(circuit::QuantumCircuit, Δ::Float64, γ::Float64, linearcoef::Vector{Float64}, verbose=false, estimate=false)::shootuntilresult
+    # The function "x->x" below is bogus bacause the last argument has value "true", so shootuntil will ignore it
+    return shootuntil(x -> x, circuit, Δ, γ, linearcoef, verbose, estimate, true) 
+end
+
+"""
+    shootuntil(fun::Function, circuit::QuantumCircuit, Δ::Float64, γ::Float64, linearcoef::Vector{Float64}, verbose=false, estimate=false, ignorefun::Bool=false)::shootuntilresult
+
+This is the generic function called by the two other methods
+"""
+function shootuntil(fun::Function, circuit::QuantumCircuit, Δ::Float64, γ::Float64, linearcoef::Vector{Float64}, verbose::Bool=false, estimate::Bool=false, ignorefun::Bool=false)::shootuntilresult
     NbOfStates = Int(2^circuit.qubit_count)
     absfreq = zeros(Int64, NbOfStates)
     relfreq = zeros(Float64, NbOfStates)
@@ -73,6 +95,9 @@ function shootuntil(fun::Function, circuit::QuantumCircuit, Δ::Float64, γ::Flo
     innerproduct = Float64(0.0)
     σ = Float64(0.0)
     shootresult = shootuntilresult(γ, Δ, circuit, iterationsdone, relfreq, funvalue, derivfun * derivfun * σ )
+    if verbose == true
+        println("starting iterative process")
+    end
 
     if ignorefun == false
         if hasmethod(fun, [Float64]) != true 
@@ -93,9 +118,9 @@ function shootuntil(fun::Function, circuit::QuantumCircuit, Δ::Float64, γ::Flo
 
     # We now perform the minimal number of shots
     iterationsmin = Int64(ceil(log(1-γ)/log(1-Δ)))
-    if verbose println("Minimal number of iteration = $(iterationsmin)") end
+    if verbose == true println("Minimal number of iteration = $(iterationsmin)") end
     CoefH = (quantile.(Normal(),(1-γ/2)) / Δ)^2 # i.e. H(γ,Δ)
-    if verbose println("Coefficient H(γ,Δ) = $(CoefH)") end
+    if verbose == true println("Coefficient H(γ,Δ) = $(CoefH)") end
     #=
     owner = ENV["USERNAME"]
     token = "token_bidon" # ENV["SNOWFLAKE_TOKEN"]
@@ -123,7 +148,7 @@ function shootuntil(fun::Function, circuit::QuantumCircuit, Δ::Float64, γ::Flo
     σ = sigmalin(relfreq, linearcoef)
     iterationsmin = Int64(ceil(derivfun * derivfun * σ * CoefH)) # this is the updated minimal value given what we have observed do far.
     
-    if verbose
+    if verbose == true
         println(iterationsdone, " iterations done. fun()=", funvalue)
         println("linear combinaison=", innerproduct, " fun(linear combinaison)=", funvalue, " derivative fun=", derivfun)
         println("The estimated required number of iterations is equal to ", iterationsmin)
@@ -175,14 +200,14 @@ function shootuntil(fun::Function, circuit::QuantumCircuit, Δ::Float64, γ::Flo
         σ = sigmalin(relfreq, linearcoef)
         iterationsmin = Int64(ceil(derivfun * derivfun * σ * CoefH)) # this is the updated minimal value given what we have observed do far.
            
-        if verbose
+        if verbose == true
             println(iterationsdone, " iterations done. fun()=", funvalue)
             println("linear combinaison=", innerproduct, " fun(linear combinaison)=", funvalue, " derivative fun=", derivfun)
             println("The estimated required number of iterations is equal to ", iterationsmin)
         end
     end
     
-    if verbose
+    if verbose == true
         println("We're done\n")
         println("Final number of iterations = $(iterationsdone)")
     end
@@ -192,15 +217,6 @@ function shootuntil(fun::Function, circuit::QuantumCircuit, Δ::Float64, γ::Flo
 
     shootresult = shootuntilresult(γ, Δ, circuit, iterationsdone, relfreq, funvalue, derivfun * derivfun * σ )
     return shootresult
-end
-
-function shootuntil(fun::Function, circuit::QuantumCircuit, Δ::Float64, γ::Float64, linearcoef::Vector{Float64}, verbose=false, estimate=false)::shootuntilresult
-    return shootuntil(fun, circuit, Δ, γ, linearcoef, verbose, estimate, false)
-end
-
-function shootuntil(circuit::QuantumCircuit, Δ::Float64, γ::Float64, linearcoef::Vector{Float64}, verbose=false, estimate=false)::shootuntilresult
-    # The function "x->x" below is bogus bacause the last argument has value "true", so shootuntil will ignore it
-    return shootuntil(x -> x, circuit, Δ, γ, linearcoef, verbose, estimate, true) 
 end
 
 function sigmalin(relfreq::Vector{Float64}, linearcoef::Vector{Float64})::Float64
@@ -221,11 +237,12 @@ function sigmalin(relfreq::Vector{Float64}, linearcoef::Vector{Float64})::Float6
     return(σ)
 end
 
+export buildfreq!
 function buildfreq!(absfreq::Vector{Int64}, result::Vector{String}, qubit_count::Int)
-    for iter ∈ 1:length(result)
+    for resultat in result
         value = Int64(0)
         n = 1<<(qubit_count-1)
-        for ch in result[iter]
+        for ch in resultat
             if ch == '1' 
                 value = value + n 
             end
