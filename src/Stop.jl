@@ -21,6 +21,12 @@ struct shootuntilresult
     variancefun::Float64
 end
 
+export printshootresult
+"""
+    printshootresult(io::IO, shrslt::shootuntilresult)
+
+Pretty print of the shootuntilresult structure.
+"""
 function printshootresult(io::IO, shrslt::shootuntilresult)
     println(io, "γ=", shrslt.γ)
     println(io, "Δ =", shrslt.Δ)
@@ -36,52 +42,27 @@ end
 Base.show(io::IO, shrslt::shootuntilresult) = printshootresult(io, shrslt)
 
 export shootuntil
-#=
 """
-    shootuntil(fun::Function, circuit::QuantumCircuit, Δ::Float64, γ::Float64, linearcoef::Vector{Float64}, verbose=false, estimate=false)::shootuntilresult
-
+    shootuntil(fun::Function, circuit::QuantumCircuit, Δ::Float64, γ::Float64, linearcoef::Vector{Float64}, verbose::Bool=false, estimate::Bool=false, ignorefun::Bool=false)::shootuntilresult
+    
 Runs a circuit until there is a probability 1-γ that the precision Δ is reached for each of the state measurements.
 # Arguments
-- `fun::function : is a function you want to calculate on the resulting proportion estimate on the final state of the circuit. For instance "sqrt" to get |α| instead of |α|^2
-The function must take a Float64 as and input and return a Float64`
-- `circuit::QuantumCircuit`: a QuantumCircuit as defined by Snowflake
-- `Δ::Float64`: the difference between the real value and the estimation
-- `γ::Float64`: the probability that the estimator is more that Δ apart from the true value.
-- `linearcoef::Vector{Float64}`  : a vector of size 2^q, where q is the number of qubit in the circuit (q=circuit.qubit_count). It is a linear combination of the probabilities of the possible bit states after measurement. For more details please see [here](Stop/index.html).
-- `verbose::boolean`: println usefull information on screen if needed for estimating suitable for Δ and γ. 
-- `estimate::boolean` : this will prevent the fuction to run past the log(1-γ)/log(1-Δ) limit which is enough to get a rough estimation of the number of shots required 
-to reach the desired precision.
+    - `fun::function : is a function you want to calculate on the resulting proportion estimate on the final state of the circuit. For instance "sqrt" to get |α| instead of |α|^2
+    The function must take a Float64 as and input and return a Float64`
+    - `circuit::QuantumCircuit`: a QuantumCircuit as defined by Snowflake
+    - `Δ::Float64`: the difference between the real value and the estimation
+    - `γ::Float64`: the probability that the estimator is more that Δ apart from the true value.
+    - `linearcoef::Vector{Float64}`  : a vector of size 2^q, where q is the number of qubit in the circuit (q=circuit.qubit_count). It is a linear combination of the probabilities of the possible bit states after measurement. For more details please see [here](Stop/index.html).
+    - `verbose::boolean`: println usefull information on screen if needed for estimating suitable for Δ and γ. 
+    - `estimate::boolean` : this will prevent the fuction to run past the log(1-γ)/log(1-Δ) limit which is enough to get a rough estimation of the number of shots required 
+    to reach the desired precision.
+
 # Example
 ```julia-repl
 julia> coeflin = [1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0]
 julia> result = shootuntil(sqrt, c1, 0.001, 0.05, coeflin, true)
 julia> println(result)
 ```
-"""
-function shootuntil(fun::Function, circuit::QuantumCircuit, Δ::Float64, γ::Float64, linearcoef::Vector{Float64}, verbose=false, estimate=false)::shootuntilresult
-    return shootuntil(fun, circuit, Δ, γ, linearcoef, verbose, estimate, false)
-end
-=#
-"""
-    shootuntil(circuit::QuantumCircuit, Δ::Float64, γ::Float64, linearcoef::Vector{Float64}, verbose=false, estimate=false)::shootuntilresult
-
-Same as the other method except that no function is provided.
-# Example
-```julia-repl
-julia> coeflin = [1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0]
-julia> result = shootuntil(c1, 0.001, 0.05, coeflin, true)
-julia> println(result)
-```
-"""
-function shootuntil(circuit::QuantumCircuit, Δ::Float64, γ::Float64, linearcoef::Vector{Float64}, verbose=false, estimate=false)::shootuntilresult
-    # The function "x->x" below is bogus bacause the last argument has value "true", so shootuntil will ignore it
-    return shootuntil(x -> x, circuit, Δ, γ, linearcoef, verbose, estimate, true) 
-end
-
-"""
-    shootuntil(fun::Function, circuit::QuantumCircuit, Δ::Float64, γ::Float64, linearcoef::Vector{Float64}, verbose=false, estimate=false, ignorefun::Bool=false)::shootuntilresult
-
-This is the generic function called by the two other methods
 """
 function shootuntil(fun::Function, circuit::QuantumCircuit, Δ::Float64, γ::Float64, linearcoef::Vector{Float64}, verbose::Bool=false, estimate::Bool=false, ignorefun::Bool=false)::shootuntilresult
     NbOfStates = Int(2^circuit.qubit_count)
@@ -217,6 +198,15 @@ function shootuntil(fun::Function, circuit::QuantumCircuit, Δ::Float64, γ::Flo
 
     shootresult = shootuntilresult(γ, Δ, circuit, iterationsdone, relfreq, funvalue, derivfun * derivfun * σ )
     return shootresult
+end
+"""
+    shootuntil(circuit::QuantumCircuit, Δ::Float64, γ::Float64, linearcoef::Vector{Float64}, verbose=false, estimate=false)::shootuntilresult
+
+Same as above but no function is provided.
+"""
+function shootuntil(circuit::QuantumCircuit, Δ::Float64, γ::Float64, linearcoef::Vector{Float64}, verbose=false, estimate=false)::shootuntilresult
+    # The function "x->x" below is bogus bacause the last argument has value "true", so shootuntil will ignore it
+    return shootuntil(x -> x, circuit, Δ, γ, linearcoef, verbose, estimate, true) 
 end
 
 function sigmalin(relfreq::Vector{Float64}, linearcoef::Vector{Float64})::Float64

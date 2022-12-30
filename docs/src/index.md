@@ -1,25 +1,26 @@
-# This is CRS Quantum Documentation
+# Shovel.jl Documentation
 
-The CRS Quantun package contains a set of useful functions for scientists using the Qube computer.
+The Shovel package contains a set of useful functions for scientists using the Qube computer.
 
 ```@docs
-shootuntil
 shootuntilresult
+printshootresult
+shootuntil
 shLaTeX
-shpush_gate!
+shoperator
+#shblock
+shinit1qubit!
+shinit2qubits!
+#shpush_gate!
 Plug
 Connector
 isinverse
 isbefore
 shprintlightQC
 shMQC
+printshMQC
 shMQCAddCircuit
 shMQCAddConnector
 shsew
-printshMQC
 shQuantumCircuit
-shoperator
-shblock
-shinit1qubit!
-shinit2qubits!
 ```

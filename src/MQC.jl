@@ -5,7 +5,7 @@ export Plug
 Plug is a structure containing the UUID of a circuit and a qubit number. It is the basic element of a Connector.
 The only validation done is that the qubit number of the circuit is valid (>0 and <=qubit_count).
 
-The operator "==" is defined for plugs.
+The comparison operator "==" is defined for plugs and returns true with both plugs connect the same qubits of the same circuits.
 """
 struct Plug
     circuit::QuantumCircuit
@@ -31,7 +31,8 @@ Connector is a structure containing two plugs: 1) the input plug which is when t
 to which qubit/circuit it is going to.
 Users can either create plugs and then a connector from them or directly create a connector by providing the circuit and the qubit.
 
-The operator "==" is defined for connector_list.
+The comparison operator "==" is defined for connectors and returns true if they have the same plugs from the same circuits IN THE SAME ORDER. If the two connectors have the same plugs but in REVERSE order, then 
+function "isreverse" should be used to check.
 """
 mutable struct Connector
     plugin::Plug
@@ -56,12 +57,11 @@ Base.show(io::IO, connec::Connector) = printConnector(io, connec)
 
 export isinverse
 """
-isinverse(connec1::Connector, connec2::Connector)::Bool 
+    isinverse(connec1::Connector, connec2::Connector)::Bool 
 
 A function to checks if a given connector is the inverse of another one.
-    The function is used for internal consistency when a connector is added to an MQC. it will return true if 
-        "connec1.plugin == connec2.plugout && connec1.plugin == connec2.plugout"
-        and false otherwise.
+The function is used for internal consistency when a connector is added to an MQC. it will return true if 
+"connec1.plugin == connec2.plugout && connec1.plugin == connec2.plugout" and false otherwise.
 """
 function isinverse(connec1::Connector, connec2::Connector)::Bool
     if connec1.plugin == connec2.plugout && connec1.plugout == connec2.plugin
@@ -73,7 +73,7 @@ end
 
 export isbefore
 """
-isbefore(connec1::Connector, connec2::Connector)::Bool 
+    isbefore(connec1::Connector, connec2::Connector)::Bool 
 
 A function to checks if the output plug of connec1 is the same as the input plug of connec2. If true, it means that connec1 is just before connec2 and they are connected together in the same wire.
 """
@@ -95,6 +95,11 @@ mutable struct Wire
     Wire(i::Int) = new(i, Vector{Connector}())
 end
 
+"""
+    ismember(connec::Connector, wire::Wire)::Bool
+
+Checks if a given connector is already in a Wire.
+"""
 function ismember(connec::Connector, wire::Wire)::Bool
     for con in wire.connector_list
         if connec == con return true end
@@ -102,6 +107,9 @@ function ismember(connec::Connector, wire::Wire)::Bool
     return false
 end
 
+"""
+Does not seem to be used anymore.
+"""
 function printWire(io::IO, wire::Wire)
     if wire.order == 0
         println("wire order not yet determined. Use function \"sew\" with a MQC")
@@ -115,6 +123,11 @@ end
 
 Base.show(io::IO, wire::Wire) = printWire(io, wire)
 
+"""
+    ismember(plg::Plug, wire::Wire)::Bool
+
+Checks if a plug is in a Wire.
+"""
 function ismember(plg::Plug, wire::Wire)::Bool
     for con in wire.connector_list
         if plg == con.plugin || plg == con.plugout 
@@ -123,6 +136,12 @@ function ismember(plg::Plug, wire::Wire)::Bool
     end
     return false
 end
+
+"""
+    CircuitPosition
+
+Structure used to document the position of circuits in an shMQC. This is for internal use. Do not export.
+"""
 mutable struct CircuitPosition
     circuit::QuantumCircuit
     stage::Int
@@ -131,11 +150,11 @@ end
 
 export shMQC
 """
-    shMQC()
+    shMQC
 
 The structure shMQC is the main element of the Meta Quantum Circuit utility.
 After adding quantum circuits (or "circuits" for short) and connector_list, a quantikz/LaTeX file can be produced.
-Most importantly, a new circuit can be generated from the MQC. 
+Most importantly, a new circuit can be generated from the shMQC. 
 """
 struct shMQC
     circuit_list::Vector{QuantumCircuit}
@@ -183,9 +202,7 @@ export shMQCAddCircuit
     shMQCAddCircuit(mqc::MQC, newc::QuantumCircuit)::Bool 
 
 This function is used to add a Snowflake QuantumCircuit to an shMQC.
-
-A given circuit cannot be add twice ot the shMQC. However, two distinct circuits with identical circuitry can.
-
+A given circuit cannot be add twice ot the shMQC. However, two distinct circuits with identical circuitry can as long as their id is different.
 The function will retrun true if the addition was successful.
 """
 function shMQCAddCircuit(mqc::shMQC, newc::QuantumCircuit)::Bool
@@ -311,12 +328,12 @@ function shMQCAddConnector(mqc::shMQC, connec::Connector)::Bool
 end
 
 """
-    findwire!(mqc::shMQC)
+    buildwire!(mqc::shMQC)
 
-Builds the wires of the MQC. Provided for sake of completeness. Users should not need it in normal circumstances. Returns nothing
-The "sew" function uses it.
+Builds the wires of the shMQC. Provided for sake of completeness. Users should not need it in normal circumstances DO NOT export. Returns nothing
+The "shsew" function uses it.
 """
-function findwire!(mqc::shMQC)
+function buildwire!(mqc::shMQC)
     nbwire = Int(0)
     pseudoplugin_list = Vector{Plug}()
     pseudoplugout_list = Vector{Plug}()
@@ -413,6 +430,11 @@ function findwire!(mqc::shMQC)
     return nothing
 end
 
+"""
+    position!(mqc::shMQC)::Vector{CircuitPosition}
+
+Builds the "position" information of the circuits within the shMQC. internal use, DO NOT export.
+"""
 function position!(mqc::shMQC)::Vector{CircuitPosition}
     
     circuitposi_list = Vector{CircuitPosition}()
@@ -467,7 +489,7 @@ end
 """
     safecopy(oldpipe)::Vector{Gate}
 
-Will take the pipeline inside a QuantumCircuit and return a copy of it. This is a "true" copy occupying a new memory chunck.
+Will take the pipeline inside a QuantumCircuit and return a copy of it. This is a "true" copy occupying a new memory chunck. Internal use, DO NOT export.
 """
 function safecopy(oldpipe)::Vector{Gate}
     newpipe = Vector{Gate}()
@@ -486,10 +508,10 @@ export shsew
 """
     shsew(mqc::shMQC)::QuantumCircuit
 
-This function takes an MQC returns a standard Snowflake QuantumCircuit equivalent.
+This function takes an shMQC and returns a standard Snowflake QuantumCircuit equivalent. This is the main goal of the shMQC concept.
 """
 function shsew(mqc::shMQC)::QuantumCircuit
-    findwire!(mqc)
+    buildwire!(mqc)
     circuitposi_list = position!(mqc)
 
     newcircuit = QuantumCircuit(qubit_count = length(mqc.wire_list), bit_count = 0)
