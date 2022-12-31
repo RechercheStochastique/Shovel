@@ -1,26 +1,487 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Shovel.jl Documentation · Shovel</title><script data-outdated-warner src="assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="assets/documenter.js"></script><script src="siteinfo.js"></script><script src="../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href><img src="assets/logo.png" alt="Shovel logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href>Shovel</a></span></div><form class="docs-search" action="search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li class="is-active"><a class="tocitem" href>Shovel.jl Documentation</a></li><li><a class="tocitem" href="Stop/">Estimation for a single qubit</a></li><li><a class="tocitem" href="ToLaTeX/">Converting a QuantumCircuit into a Quantikz/LaTeX output</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Shovel.jl Documentation</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Shovel.jl Documentation</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/RechercheStochastique/shovel/blob/main/docs/src/index.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Shovel.jl-Documentation"><a class="docs-heading-anchor" href="#Shovel.jl-Documentation">Shovel.jl Documentation</a><a id="Shovel.jl-Documentation-1"></a><a class="docs-heading-anchor-permalink" href="#Shovel.jl-Documentation" title="Permalink"></a></h1><p>The Shovel package contains a set of useful functions for scientists using the Qube computer.</p><article class="docstring"><header><a class="docstring-binding" id="Shovel.shootuntilresult" href="#Shovel.shootuntilresult"><code>Shovel.shootuntilresult</code></a> — <span class="docstring-category">Type</span></header><section><div><p>shootuntilresult is a structure containing the results of shootuntil function. It is intended to be reused      by another package to perform analysis. </p><p><strong>Members</strong></p><ul><li>γ::Float64</li><li>Δ::Float64</li><li>circuit::QuantumCircuit</li><li>samplesize::Int64</li><li>Proportions::Vector{Float64}</li><li>funvalue::Float64</li><li>variancefun::Float64</li></ul></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/9aa5ff3b4e7c5442e2ffe54f273e2192bab8b556/src/Stop.jl#L2-L13">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.printshootresult" href="#Shovel.printshootresult"><code>Shovel.printshootresult</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">printshootresult(io::IO, shrslt::shootuntilresult)</code></pre><p>Pretty print of the shootuntilresult structure.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/9aa5ff3b4e7c5442e2ffe54f273e2192bab8b556/src/Stop.jl#L25-L29">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.shootuntil" href="#Shovel.shootuntil"><code>Shovel.shootuntil</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">shootuntil(fun::Function, circuit::QuantumCircuit, Δ::Float64, γ::Float64, linearcoef::Vector{Float64}, verbose::Bool=false, estimate::Bool=false, ignorefun::Bool=false)::shootuntilresult</code></pre><p>Runs a circuit until there is a probability 1-γ that the precision Δ is reached for each of the state measurements.</p><p><strong>Arguments</strong></p><pre><code class="nohighlight hljs">- `fun::function : is a function you want to calculate on the resulting proportion estimate on the final state of the circuit. For instance &quot;sqrt&quot; to get |α| instead of |α|^2
-The function must take a Float64 as and input and return a Float64`
-- `circuit::QuantumCircuit`: a QuantumCircuit as defined by Snowflake
-- `Δ::Float64`: the difference between the real value and the estimation
-- `γ::Float64`: the probability that the estimator is more that Δ apart from the true value.
-- `linearcoef::Vector{Float64}`  : a vector of size 2^q, where q is the number of qubit in the circuit (q=circuit.qubit_count). It is a linear combination of the probabilities of the possible bit states after measurement. For more details please see [here](Stop/index.html).
-- `verbose::boolean`: println usefull information on screen if needed for estimating suitable for Δ and γ. 
-- `estimate::boolean` : this will prevent the fuction to run past the log(1-γ)/log(1-Δ) limit which is enough to get a rough estimation of the number of shots required 
-to reach the desired precision.</code></pre><p><strong>Example</strong></p><pre><code class="language-julia-repl hljs">julia&gt; coeflin = [1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0]
-julia&gt; result = shootuntil(sqrt, c1, 0.001, 0.05, coeflin, true)
-julia&gt; println(result)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/9aa5ff3b4e7c5442e2ffe54f273e2192bab8b556/src/Stop.jl#L45-L66">source</a></section><section><div><pre><code class="nohighlight hljs">shootuntil(circuit::QuantumCircuit, Δ::Float64, γ::Float64, linearcoef::Vector{Float64}, verbose=false, estimate=false)::shootuntilresult</code></pre><p>Same as above but no function is provided.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/9aa5ff3b4e7c5442e2ffe54f273e2192bab8b556/src/Stop.jl#L202-L206">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.shLaTeX" href="#Shovel.shLaTeX"><code>Shovel.shLaTeX</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">shLaTeX(pattern::String, str::String)::String</code></pre><p>This function will substitute &quot;pattern&quot; inside str by &quot;\pattern&quot;. This is mostly used when pattern = sin, cos or sqrt.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/9aa5ff3b4e7c5442e2ffe54f273e2192bab8b556/src/ToLaTeX.jl#L40-L44">source</a></section><section><div><pre><code class="nohighlight hljs">shLaTeX(str::String)::String</code></pre><p>This function will substitute &quot;cos&quot; by &quot;\cos&quot;, &quot;sin&quot; by &quot;\sin&quot; and &quot;sqrt&quot; by &quot;\sqrt&quot; in str.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/9aa5ff3b4e7c5442e2ffe54f273e2192bab8b556/src/ToLaTeX.jl#L61-L65">source</a></section><section><div><pre><code class="nohighlight hljs">shLaTeX(c::QuantumCircuit, FName::String)::Bool</code></pre><p>Will generate a file containing the LaTeX/quantikz code in the standalone documentclass.</p><p><strong>Arguments</strong></p><ul><li><code>circuit::QuantumCircuit</code>: a QuantumCircuit as defined by Snowflake</li><li><code>FName::String</code>: the name of the file to create. Warning! It will overwrite if already existing. If omitted it will print to stdout</li></ul><p><strong>Example</strong></p><pre><code class="language-julia-repl hljs">julia&gt; shLaTeX(circuit, &quot;Foo.bar&quot;)
-</code></pre><p>This is an example of the output file generated by ToLaTeX(). It can be copy&amp;paste to any other Latex document.</p><pre><code class="nohighlight hljs">\documentclass{standalone}
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Shovel.jl Documentation · Shovel</title><script data-outdated-warner src="assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="assets/documenter.js"></script><script src="siteinfo.js"></script><script src="../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href><img src="assets/logo.png" alt="Shovel logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href>Shovel</a></span></div><form class="docs-search" action="search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li class="is-active"><a class="tocitem" href>Shovel.jl Documentation</a><ul class="internal"><li><a class="tocitem" href="#Shootuntil-method"><span>Shootuntil method</span></a></li><li><a class="tocitem" href="#Meta-Quantum-Circuit-(shMQC)"><span>Meta Quantum Circuit (shMQC)</span></a></li><li><a class="tocitem" href="#LaTeX-utilities"><span>LaTeX utilities</span></a></li><li><a class="tocitem" href="#Initprob-utilities"><span>Initprob utilities</span></a></li></ul></li><li><a class="tocitem" href="Stop/">Estimation for a single qubit</a></li><li><a class="tocitem" href="ToLaTeX/">Converting a QuantumCircuit into a Quantikz/LaTeX output</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Shovel.jl Documentation</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Shovel.jl Documentation</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/RechercheStochastique/shovel/blob/main/docs/src/index.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Shovel.jl-Documentation"><a class="docs-heading-anchor" href="#Shovel.jl-Documentation">Shovel.jl Documentation</a><a id="Shovel.jl-Documentation-1"></a><a class="docs-heading-anchor-permalink" href="#Shovel.jl-Documentation" title="Permalink"></a></h1><p>The Shovel package contains a set of useful functions for scientists using the Qube computer.</p><h2 id="Shootuntil-method"><a class="docs-heading-anchor" href="#Shootuntil-method">Shootuntil method</a><a id="Shootuntil-method-1"></a><a class="docs-heading-anchor-permalink" href="#Shootuntil-method" title="Permalink"></a></h2><p>The goal of this method is to simplify life of quantum circuit designers. Since a quantum computer is probabilistic, a circuit must be run several time in order to get a good idea of the resulting proportion of each possible measurement outcomes.</p><p>So instead of guessing the sutable number of trial, the user of shootuntil is offered to define a confidence interval and a probability of being inside it. The function <a href="#Shovel.shootuntil"><code>shootuntil</code></a> will perform sequential shots of the circuit until it reached the desired level of confidence requested by the user.</p><p>The user has the possibility of defining a linear combinaison of the possible outcomes. If, for instance, the probability of {0,...0} (all zeros) is desired, then the linear combinasion [1,0,...0] will be used. If, on the other hand, we seek  the probability that the last qubit is equal to 0, than, all measurements ending with zero is to be estimated. Then, the proper linear combinasion is given by [0,1,0,1,...0,1] (&quot;0,1&quot; repeated).</p><article class="docstring"><header><a class="docstring-binding" id="Shovel.shootuntilresult" href="#Shovel.shootuntilresult"><code>Shovel.shootuntilresult</code></a> — <span class="docstring-category">Type</span></header><section><div><p>shootuntilresult is a structure containing the results of <a href="#Shovel.shootuntil"><code>shootuntil</code></a> function. It is intended to be reused by another package to perform analysis. </p><p><strong>Members</strong></p><ul><li><code>gamma::Float64</code> the probability that the estimated parameter is farther than Delta from the true value.</li><li><code>Delta::Float64</code> the disired distance between estimator and true value.</li><li><code>circuit::QuantumCircuit</code> the circuit being analysed.</li><li><code>samplesize::Int64</code> the resulting sample size.</li><li><code>Proportions::Vector{Float64}</code> the relative frequencies of each possilble measurements of the circuit.</li><li><code>funvalue::Float64</code> the value of the function of the linear combinaison measured.</li><li><code>variancefun::Float64</code> the variance of the function of the linear combinaison.</li></ul><p>After running several shots of a quantum circuit using <a href="#Shovel.shootuntil"><code>shootuntil</code></a> the output is summarized into this structure and can be reused for further statistical analysis. Only the final frequency table of the shots are available since this constitute an exhaustive statistics for the results.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/07cf48bed3adf28b8a29e1c0f13c960f92143411/src/Stop.jl#L2-L15">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.printshootresult" href="#Shovel.printshootresult"><code>Shovel.printshootresult</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">printshootresult(io::IO, shrslt::shootuntilresult)</code></pre><p>Pretty print of the shootuntilresult structure.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/07cf48bed3adf28b8a29e1c0f13c960f92143411/src/Stop.jl#L28-L32">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.shootuntil" href="#Shovel.shootuntil"><code>Shovel.shootuntil</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">shootuntil(fun::Function, circuit::QuantumCircuit, Δ::Float64, γ::Float64, linearcoef::Vector{Float64}, verbose::Bool=false, estimate::Bool=false, ignorefun::Bool=false)::shootuntilresult
+shootuntil(circuit::QuantumCircuit, Δ::Float64, γ::Float64, linearcoef::Vector{Float64}, verbose=false, estimate=false)::shootuntilresult</code></pre><p>Runs a circuit until there is a probability 1-γ that the precision Δ is reached for each of the state measurements.</p><p><strong>Arguments</strong></p><ul><li>fun::function : is a function you want to calculate on the resulting proportion estimate on the final state of the circuit. For instance &quot;sqrt&quot; to get |α| instead of |α|^2. The function must take a Float64 as and input and return a Float64</li><li>circuit::QuantumCircuit: a QuantumCircuit as defined by Snowflake</li><li>Δ::Float64: the difference between the real value and the estimation</li><li>γ::Float64: the probability that the estimator is more that Δ apart from the true value.</li><li>linearcoef::Vector{Float64}: a vector of size 2^q, where q is the number of qubit in the circuit (q=circuit.qubit_count). It is a linear combination of the probabilities of the possible bit states after measurement. For more details please see <a href="Stop/index.html">here</a>.</li><li>verbose::boolean: println usefull information on screen if needed for estimating suitable for Δ and γ. </li><li>estimate::boolean : this will prevent the fuction to run past the log(1-γ)/log(1-Δ) limit which is enough to get a rough estimation of the number of shots required to reach the desired precision.</li></ul><p>The second version  is the same but without the function.</p><p><strong>Example</strong></p><pre><code class="nohighlight hljs">julia&gt; c = QuantumCircuit(qubit_count = 3, bit_count=0);
+... ( a bunch of &quot;push_gate!() to define the circuit c goes here)
+julia&gt; linear_coefficient = [1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0];
+julia&gt; result = Shovel.shootuntil(sqrt, c, 0.001, 0.05, linear_coefficient, true);
+starting iterative process
+Minimal number of iteration = 52
+Coefficient H(γ,Δ) = 3.8414588206941388e6
+52 iterations done. fun()=0.970725343394151
+linear combinaison=0.9423076923076923 fun(linear combinaison)=0.970725343394151 derivative fun=0.5150788261477635
+The estimated required number of iterations is equal to 55406
+We need to continue
+27729 iterations done. fun()=0.9364186034730589
+linear combinaison=0.8768798009304339 fun(linear combinaison)=0.9364186034730589 derivative fun=0.5339493250440253
+The estimated required number of iterations is equal to 118241
+72985 iterations done. fun()=0.9355470798948244
+linear combinaison=0.875248338699733 fun(linear combinaison)=0.9355470798948244 derivative fun=0.5344467342494053
+The estimated required number of iterations is equal to 119808
+96396 iterations done. fun()=0.9358606183038087
+linear combinaison=0.8758350968919872 fun(linear combinaison)=0.9358606183038087 derivative fun=0.5342676801416424
+The estimated required number of iterations is equal to 119244
+107820 iterations done. fun()=0.9358083885129101
+linear combinaison=0.8757373400111297 fun(linear combinaison)=0.9358083885129101 derivative fun=0.5342974989674953
+The estimated required number of iterations is equal to 119338
+113579 iterations done. fun()=0.9357784160216117
+linear combinaison=0.8756812438919167 fun(linear combinaison)=0.9357784160216117 derivative fun=0.534314612247011
+The estimated required number of iterations is equal to 119392
+116485 iterations done. fun()=0.9357934167306433
+linear combinaison=0.8757093187964116 fun(linear combinaison)=0.9357934167306433 derivative fun=0.534306047212163
+The estimated required number of iterations is equal to 119365
+117925 iterations done. fun()=0.9358295661561952
+linear combinaison=0.8757769768920924 fun(linear combinaison)=0.9358295661561952 derivative fun=0.5342854079098958
+The estimated required number of iterations is equal to 119300
+119300 iterations done. fun()=0.9358466141219156
+linear combinaison=0.8758088851634536 fun(linear combinaison)=0.9358466141219156 derivative fun=0.5342756750272848
+The estimated required number of iterations is equal to 119269
+We&#39;re done
+
+Final number of iterations = 119300
+
+julia&gt; println(result)
+γ=0.05
+Δ =0.001
+Circuit: Quantum Circuit Object:
+   id: 65e73d60-87e4-11ed-15b5-e3057c69e742
+   qubit_count: 3
+   bit_count: 0
+q[1]:--Ry(0.1)--------------------------*----*-------------------------------*--
+                                        |    |                               |
+q[2]:-------------Ry(0.2)---------------X----|---------------*----Ry(0.5)----X--
+                                             |               |
+q[3]:------------------------Ry(0.3)---------X----Ry(0.4)----X------------------
+
+Number of shots=119300
+Proportions:
+[0.804777870913663, 0.0942246437552389, 0.06854149203688181, 0.02992455993294216, 0.002321877619446773, 0.0, 0.00016764459346186087, 4.191114836546522e-5]
+Estimated value of function=0.9358466141219156
+Variance of estimate=0.031047788828476044</code></pre><p>Details of the circuit does not matter but, since it is a 3-qubits circuit, it has 8 possible outcomes for which the relative proportions are given. The linear combinaison is such that the proportion of the first qubit being equal to 0 is used and the square root of that proportion is used for the stopping rule.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/07cf48bed3adf28b8a29e1c0f13c960f92143411/src/Stop.jl#L47-L124">source</a></section><section><div><pre><code class="nohighlight hljs">shootuntil(circuit::QuantumCircuit, Δ::Float64, γ::Float64, linearcoef::Vector{Float64}, verbose=false, estimate=false)::shootuntilresult</code></pre><p>Same as above but no function is provided.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/07cf48bed3adf28b8a29e1c0f13c960f92143411/src/Stop.jl#L260-L264">source</a></section></article><h2 id="Meta-Quantum-Circuit-(shMQC)"><a class="docs-heading-anchor" href="#Meta-Quantum-Circuit-(shMQC)">Meta Quantum Circuit (shMQC)</a><a id="Meta-Quantum-Circuit-(shMQC)-1"></a><a class="docs-heading-anchor-permalink" href="#Meta-Quantum-Circuit-(shMQC)" title="Permalink"></a></h2><p>The idea of a meta quantum circuit is to help circuit designers to easily reuse already defined circuits. If, for instance, one has a circuit V producing a result that needs to be incerted into a larger circuit. It suffise to define how this circuit is &quot;plugged&quot; with the other elements and let <a href="#Shovel.shsew"><code>shsew</code></a> build the resulting circuit.</p><article class="docstring"><header><a class="docstring-binding" id="Shovel.Plug" href="#Shovel.Plug"><code>Shovel.Plug</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">Plug(c::QuantumCircuit, qb::Int)</code></pre><p><strong>Members</strong></p><ul><li><code>circuit::QuantumCircuit</code></li><li><code>qubit::Int</code> a valid qubit number within the above circuit (1 ≤ qubit ≤ circuit.qubit_count)</li></ul><p>Plug is a structure containing the UUID of a Snowflake quantum circuit and a qubit number. It is the building block of a Connector. The only validation done is that the qubit number of the circuit is valid (&gt;0 and &lt;=qubit_count).</p><p>The comparison operator &quot;==&quot; is defined for plugs and returns true with both plugs connect the same qubits of the same circuits.</p><p><strong>Example</strong></p><pre><code class="nohighlight hljs">julia&gt; plg = Plug(c, 1)
+Circuit id: f5335690-885a-11ed-3814-393fb2ae6861   qubit: 1
+
+julia&gt; plg2 = Plug(c,2)
+Circuit id: f5335690-885a-11ed-3814-393fb2ae6861   qubit: 2
+
+julia&gt; plg == plg2
+false</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/07cf48bed3adf28b8a29e1c0f13c960f92143411/src/MQC.jl#L2-L25">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.Connector" href="#Shovel.Connector"><code>Shovel.Connector</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">Connector(plg1::Plug, plg2::Plug)
+Connector(c1::QuantumCircuit, qb1::Int, c2::QuantumCircuit, qb2::Int)</code></pre><p>Connector is a structure containing two plugs: 1) the input plug which is when the qubit/circuit is coming from and 2) the output plug indicating to which qubit/circuit it is going to. Users can either create plugs and then a connector from them or directly create a connector by providing the circuit and the qubit.</p><p>The comparison operator &quot;==&quot; is defined for connectors and returns true if they have the same plugs from the same circuits IN THE SAME ORDER. If the two connectors have the same plugs but in REVERSE order, then  function <a href="#Shovel.isinverse"><code>isinverse</code></a> should be used to check.</p><p>The two other members are used to order them within a <a href="#Shovel.shMQC"><code>shMQC</code></a> and need not be documented at initialization time.</p><p><strong>Members</strong></p><ul><li><code>plugin::Plug</code> the begining of the connector (circuit &amp; qubit).</li><li><code>plugout::Plug</code>  the end of the connector (circuit &amp; qubit).</li><li><code>stage::Int</code> not needed at construction time.</li><li><code>wire::Int</code> not needed at construction time.</li></ul><p><strong>Example</strong></p><p>In the example above, the connector is crated directly without the use of plugs. However, these will be created in the connector. Members &quot;stage&quot; and &quot;wire&quot; are used only within the shMQC at the final construction phase <a href="#Shovel.shsew"><code>shsew</code></a></p><pre><code class="nohighlight hljs">julia&gt; c1 = QuantumCircuit(qubit_count=4, bit_count=0);
+
+julia&gt; c2 = QuantumCircuit(qubit_count=4, bit_count=0);
+
+julia&gt; con1_1 = Connector(c1, 2, c2, 1)
+Plugin  = Circuit id: 84fbcf80-8880-11ed-354f-3dafa0e9bdc6   qubit: 2
+Plugout = Circuit id: 89614c80-8880-11ed-160b-75d0fd206f1d   qubit: 1</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/07cf48bed3adf28b8a29e1c0f13c960f92143411/src/MQC.jl#L42-L73">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.isinverse" href="#Shovel.isinverse"><code>Shovel.isinverse</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">isinverse(connec1::Connector, connec2::Connector)::Bool</code></pre><p>A function to checks if a given connector is the inverse of another one. The function is used for internal consistency when a connector is added to an MQC. it will return true if  &quot;connec1.plugin == connec2.plugout &amp;&amp; connec1.plugin == connec2.plugout&quot; and false otherwise.</p><p><strong>Example</strong></p><p>As can be seen in the example above, the second connector is define as the inverse of the first. Since a <a href="#Shovel.shMQC"><code>shMQC</code></a> cannot contain contradictory path, this function is used to exclude this type of situation.</p><pre><code class="nohighlight hljs">julia&gt; con1_1 = Connector(c1, 2, c2, 1)
+Plugin  = Circuit id: 84fbcf80-8880-11ed-354f-3dafa0e9bdc6   qubit: 2
+Plugout = Circuit id: 89614c80-8880-11ed-160b-75d0fd206f1d   qubit: 1
+
+julia&gt; con1_2 = Connector(c2, 1, c1, 2)
+Plugin  = Circuit id: 89614c80-8880-11ed-160b-75d0fd206f1d   qubit: 1
+Plugout = Circuit id: 84fbcf80-8880-11ed-354f-3dafa0e9bdc6   qubit: 2
+
+julia&gt; isinverse(con1_1, con1_2)
+true</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/07cf48bed3adf28b8a29e1c0f13c960f92143411/src/MQC.jl#L96-L117">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.isbefore" href="#Shovel.isbefore"><code>Shovel.isbefore</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">isbefore(connec1::Connector, connec2::Connector)::Bool</code></pre><p>A function to checks if the output plug of connec1 is the same as the input plug of connec2. If true, it means that connec1 is just before connec2 and they are connected together in the same wire.</p><p><strong>Example</strong></p><p>Three circuits are created and connector con1<em>1 goes from c1 to c2 while con1</em>2 goes from c2 to c3. Additionally, the starting qubit of con1<em>2 is the same as the ending qubit of con1</em>1. Therefore cont1<em>1 is before con1</em>2.</p><pre><code class="nohighlight hljs">julia&gt; c1 = QuantumCircuit(qubit_count=4, bit_count=0);
+
+julia&gt; c2 = QuantumCircuit(qubit_count=4, bit_count=0);
+
+julia&gt; c3 = QuantumCircuit(qubit_count=4, bit_count=0);
+
+julia&gt; con1_1 = Connector(c1, 2, c2, 1)
+Plugin  = Circuit id: 71b5cfa0-8882-11ed-0999-6ff9e4725693   qubit: 2
+Plugout = Circuit id: 76869190-8882-11ed-12cd-8935492334e6   qubit: 1
+
+julia&gt; con1_2 = Connector(c2, 1, c3, 1)
+Plugin  = Circuit id: 76869190-8882-11ed-12cd-8935492334e6   qubit: 1
+Plugout = Circuit id: 802c0d10-8882-11ed-1449-7b4ca7f5e3a1   qubit: 1
+
+julia&gt; isbefore(con1_1, con1_2)
+true</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/07cf48bed3adf28b8a29e1c0f13c960f92143411/src/MQC.jl#L127-L153">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.Wire" href="#Shovel.Wire"><code>Shovel.Wire</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">Wire</code></pre><p>The structure Wire is used to position <a href="#Shovel.Connector"><code>Connector</code></a>s into a <a href="#Shovel.shMQC"><code>shMQC</code></a>. It is created while sewing the circuits together using <a href="#Shovel.shsew"><code>shsew</code></a> and not normally used by end users. Connectors belonging to the same wire are all connected to each other in a sequential order ( [<code>isbefore</code>])(@ref) is therefore true for two subsequent connectors in the connector_list. </p><p><strong>Members</strong></p><ul><li><code>order::Int</code> in the shMQC the wires are ordered from top (=1) to buttom.</li><li><code>connector_list::Vector{Connector}</code> is a list of <a href="#Shovel.Connector"><code>Connector</code></a>s composing the Wire.</li></ul></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/07cf48bed3adf28b8a29e1c0f13c960f92143411/src/MQC.jl#L163-L172">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.ismember" href="#Shovel.ismember"><code>Shovel.ismember</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">ismember(connec::Connector, wire::Wire)::Bool
+ismember(plg::Plug, wire::Wire)::Bool</code></pre><p>Checks if a given <a href="#Shovel.Connector"><code>Connector</code></a> or <a href="#Shovel.Plug"><code>Plug</code></a> is already in a <a href="#Shovel.Wire"><code>Wire</code></a>. Another internal function checking if a connector is part of a given wire in a <a href="#Shovel.shMQC"><code>shMQC</code></a>. This is an iternal fuction not needed by end users.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/07cf48bed3adf28b8a29e1c0f13c960f92143411/src/MQC.jl#L181-L187">source</a></section><section><div><pre><code class="nohighlight hljs">ismember(plg::Plug, wire::Wire)::Bool</code></pre><p>Checks if a plug is in a Wire. Same logic as for a connector. Internal use.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/07cf48bed3adf28b8a29e1c0f13c960f92143411/src/MQC.jl#L211-L215">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.shprintlightQC" href="#Shovel.shprintlightQC"><code>Shovel.shprintlightQC</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">shprintlightQC(io::IO, circuit::QuantumCircuit)</code></pre><p>A quick display of basic info on a QuantumCircuit. Sometime there is too much information when displaying QuantumCircuit information.</p><p><strong>Example</strong></p><pre><code class="nohighlight hljs">julia&gt; c1
+Quantum Circuit Object:
+   id: 71b5cfa0-8882-11ed-0999-6ff9e4725693
+   qubit_count: 4
+   bit_count: 0
+q[1]:──H────*────X────*───────────────────*────Z──
+            |         |                   |    |
+q[2]:───────X─────────Z──────────────*────|────|──
+                                     |    |    |
+q[3]:──────────────────────H─────────|────Z────|──
+                                     |         |
+q[4]:───────────────────────────H────Z─────────*──
+
+julia&gt; shprintlightQC(stdout, c1)
+circuit id: 71b5cfa0-8882-11ed-0999-6ff9e4725693  qubit_count = 4  pipeline size = 9</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/07cf48bed3adf28b8a29e1c0f13c960f92143411/src/MQC.jl#L257-L280">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.shMQC" href="#Shovel.shMQC"><code>Shovel.shMQC</code></a> — <span class="docstring-category">Type</span></header><section><div><p>The structure shMQC is the main element of the Meta Quantum Circuit utility. After adding Snowflake QuantumCircuits and <a href="#Shovel.Connector"><code>Connector</code></a>s to it, a quantikz/LaTeX file can be produced and, most importantly, a new circuit can be generated from the shMQC.</p><p>The main use of shMQC is to build larger circuits using alreday available circuits by plugin them together.</p><p><strong>Members</strong></p><ul><li><code>circuit_list::Vector{QuantumCircuit}</code></li><li><code>connector_list::Vector{Connector}</code></li><li><code>wire_list::Vector{Wire}</code></li></ul><p>The circuit<em>list and connector</em>list are self-explanatory. The wire_list is build by the <a href="#Shovel.shsew"><code>shsew</code></a> function to align all elements together.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/07cf48bed3adf28b8a29e1c0f13c960f92143411/src/MQC.jl#L237-L249">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.shMQCAddCircuit" href="#Shovel.shMQCAddCircuit"><code>Shovel.shMQCAddCircuit</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">shMQCAddCircuit(mqc::MQC, newc::QuantumCircuit)::Bool</code></pre><p>This function is used to add a Snowflake QuantumCircuit to a <a href="#Shovel.shMQC"><code>shMQC</code></a>. A given circuit cannot be add twice ot the <a href="#Shovel.shMQC"><code>shMQC</code></a>. However, two distinct circuits with identical circuitry can as long as their id is different. The function will retrun true if the addition was successful. The addition is successful is it retrurs true. Otherwise, the circuit is probably already in the <a href="#Shovel.shMQC"><code>shMQC</code></a>.</p><p><strong>Example</strong></p><pre><code class="nohighlight hljs">julia&gt; mqc = shMQC();
+julia&gt; shMQCAddCircuit(mqc, c1)
+true</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/07cf48bed3adf28b8a29e1c0f13c960f92143411/src/MQC.jl#L374-L387">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.shMQCAddConnector" href="#Shovel.shMQCAddConnector"><code>Shovel.shMQCAddConnector</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">shMQCAddConnector(mqc::shMQC, connec::Connector)::Bool</code></pre><p>This function is used to add a connector to an MQC. It has several consistancy checks and will return false if the proposed connector creates inconsistencies such as circular circuitry (a list of connector looping back to the initial circuit) or duplicate <a href="#Shovel.Connector"><code>Connector</code></a>s.</p><p><strong>Example 1</strong></p><p>In this example a connector is to be added but the end part of the connector was not added to the <a href="#Shovel.shMQC"><code>shMQC</code></a>. Hece it will fail for not finding it.</p><pre><code class="nohighlight hljs">julia&gt; mqc = shMQC();
+julia&gt; shMQCAddCircuit(mqc, c1);
+julia&gt; shMQCAddConnector(mqc, con1_1)
+At least one circuits defined in the plugs of the connector are not in the circuit list of the shMQC. Noting to connect to</code></pre><p><strong>Example 2</strong></p><p>Now the two end are in the shMQC</p><pre><code class="nohighlight hljs">julia&gt; mqc = shMQC();
+
+julia&gt; shMQCAddCircuit(mqc, c1);
+
+julia&gt; shMQCAddCircuit(mqc, c2);
+
+julia&gt; shMQCAddConnector(mqc, con1_1)
+true</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/07cf48bed3adf28b8a29e1c0f13c960f92143411/src/MQC.jl#L408-L434">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.printshMQC" href="#Shovel.printshMQC"><code>Shovel.printshMQC</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">printshMQC(io::IO, mqc::shMQC)</code></pre><p>Summary print of what&#39;s inside a <a href="#Shovel.shMQC"><code>shMQC</code></a>.</p><p><strong>Example</strong></p><p>In the example abva, 5 circuits are added into a <a href="#Shovel.shMQC"><code>shMQC</code></a>, using <a href="#Shovel.shMQCAddCircuit"><code>shMQCAddCircuit</code></a>, and several connectors, using [<code>shMQCAddConnector</code>]@(ref)  defining the piping of the <a href="#Shovel.shMQC"><code>shMQC</code></a>.</p><pre><code class="nohighlight hljs">julia&gt; mqc = shMQC();
+julia&gt; shMQCAddCircuit(mqc, c1);
+julia&gt; shMQCAddCircuit(mqc, c2);
+julia&gt; shMQCAddCircuit(mqc, c3);
+julia&gt; shMQCAddCircuit(mqc, c4);
+julia&gt; shMQCAddCircuit(mqc, c5);
+julia&gt; shMQCAddConnector(mqc, con1_1);
+julia&gt; shMQCAddConnector(mqc, con1_2);
+julia&gt; shMQCAddConnector(mqc, con1_3);
+julia&gt; shMQCAddConnector(mqc, con2_1);
+julia&gt; shMQCAddConnector(mqc, con2_2);
+julia&gt; shMQCAddConnector(mqc, con2_3);
+julia&gt; shMQCAddConnector(mqc, con3_1);
+julia&gt; shMQCAddConnector(mqc, con3_2);
+julia&gt; shMQCAddConnector(mqc, con3_3);
+julia&gt; shMQCAddConnector(mqc, con4_1);
+julia&gt; shMQCAddConnector(mqc, con4_2);
+julia&gt; shMQCAddConnector(mqc, con4_3);
+
+julia&gt; mqc
+The shMQC is made of these circuits:
+circuit id: 24a8c970-8886-11ed-3438-9f8d7f11f419  qubit_count = 4  pipeline size = 9
+circuit id: 24b68510-8886-11ed-211f-c9940c38b4a6  qubit_count = 4  pipeline size = 9
+circuit id: 24c48ed0-8886-11ed-3ef0-994877b2a905  qubit_count = 4  pipeline size = 9
+circuit id: 24d61b00-8886-11ed-1cc7-173c101871b8  qubit_count = 4  pipeline size = 9
+circuit id: 24def4a0-8886-11ed-15e9-d90899ad2133  qubit_count = 6  pipeline size = 14
+
+And these connector
+Connector 1
+Plugin  = Circuit id: 24a8c970-8886-11ed-3438-9f8d7f11f419   qubit: 2
+Plugout = Circuit id: 24b68510-8886-11ed-211f-c9940c38b4a6   qubit: 1
+Connector 2
+Plugin  = Circuit id: 24a8c970-8886-11ed-3438-9f8d7f11f419   qubit: 3
+Plugout = Circuit id: 24b68510-8886-11ed-211f-c9940c38b4a6   qubit: 2
+Connector 3
+Plugin  = Circuit id: 24a8c970-8886-11ed-3438-9f8d7f11f419   qubit: 4
+Plugout = Circuit id: 24b68510-8886-11ed-211f-c9940c38b4a6   qubit: 3
+Connector 4
+Plugin  = Circuit id: 24b68510-8886-11ed-211f-c9940c38b4a6   qubit: 2
+Plugout = Circuit id: 24c48ed0-8886-11ed-3ef0-994877b2a905   qubit: 1
+Connector 5
+Plugin  = Circuit id: 24b68510-8886-11ed-211f-c9940c38b4a6   qubit: 3
+Plugout = Circuit id: 24c48ed0-8886-11ed-3ef0-994877b2a905   qubit: 2
+Connector 6
+Plugin  = Circuit id: 24b68510-8886-11ed-211f-c9940c38b4a6   qubit: 4
+Plugout = Circuit id: 24c48ed0-8886-11ed-3ef0-994877b2a905   qubit: 3
+Connector 7
+Plugin  = Circuit id: 24c48ed0-8886-11ed-3ef0-994877b2a905   qubit: 2
+Plugout = Circuit id: 24d61b00-8886-11ed-1cc7-173c101871b8   qubit: 1
+Connector 8
+Plugin  = Circuit id: 24c48ed0-8886-11ed-3ef0-994877b2a905   qubit: 3
+Plugout = Circuit id: 24d61b00-8886-11ed-1cc7-173c101871b8   qubit: 2
+Connector 9
+Plugin  = Circuit id: 24c48ed0-8886-11ed-3ef0-994877b2a905   qubit: 4
+Plugout = Circuit id: 24d61b00-8886-11ed-1cc7-173c101871b8   qubit: 3
+Connector 10
+Plugin  = Circuit id: 24d61b00-8886-11ed-1cc7-173c101871b8   qubit: 1
+Plugout = Circuit id: 24def4a0-8886-11ed-15e9-d90899ad2133   qubit: 3
+Connector 11
+Plugin  = Circuit id: 24d61b00-8886-11ed-1cc7-173c101871b8   qubit: 3
+Plugout = Circuit id: 24def4a0-8886-11ed-15e9-d90899ad2133   qubit: 2
+Connector 12
+Plugin  = Circuit id: 24d61b00-8886-11ed-1cc7-173c101871b8   qubit: 4
+Plugout = Circuit id: 24def4a0-8886-11ed-15e9-d90899ad2133   qubit: 5</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/07cf48bed3adf28b8a29e1c0f13c960f92143411/src/MQC.jl#L281-L354">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.shsew" href="#Shovel.shsew"><code>Shovel.shsew</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">shsew(mqc::shMQC)::QuantumCircuit</code></pre><p>This function takes an <a href="#Shovel.shMQC"><code>shMQC</code></a> and returns a standard Snowflake QuantumCircuit equivalent. This is the main goal of the <a href="#Shovel.shMQC"><code>shMQC</code></a> concept.</p><p><strong>Example</strong></p><p>A <a href="#Shovel.shMQC"><code>shMQC</code></a> is created with 5 circuits and 12 connectors. The resulting quantum circuit is then created by sewing all pieces together.</p><pre><code class="nohighlight hljs">julia&gt; mqc
+
+The shMQC is made of these circuits:
+circuit id: 9c9b32e0-8888-11ed-0a20-f12af1106257  qubit_count = 4  pipeline size = 9
+circuit id: 9ca6cba0-8888-11ed-375f-ef0c51f31fc8  qubit_count = 4  pipeline size = 9
+circuit id: 9cb39ce0-8888-11ed-05d5-bff313ab1874  qubit_count = 4  pipeline size = 9
+circuit id: 9cc3062e-8888-11ed-2d41-45f511d1ab58  qubit_count = 4  pipeline size = 9
+circuit id: 9ccb6aa0-8888-11ed-02ee-d37c6c44d379  qubit_count = 6  pipeline size = 14
+
+And these connector
+Connector 1
+Plugin  = Circuit id: 9c9b32e0-8888-11ed-0a20-f12af1106257   qubit: 2
+Plugout = Circuit id: 9ca6cba0-8888-11ed-375f-ef0c51f31fc8   qubit: 1
+Connector 2
+Plugin  = Circuit id: 9c9b32e0-8888-11ed-0a20-f12af1106257   qubit: 3
+Plugout = Circuit id: 9ca6cba0-8888-11ed-375f-ef0c51f31fc8   qubit: 2
+Connector 3
+Plugin  = Circuit id: 9c9b32e0-8888-11ed-0a20-f12af1106257   qubit: 4
+Plugout = Circuit id: 9ca6cba0-8888-11ed-375f-ef0c51f31fc8   qubit: 3
+Connector 4
+Plugin  = Circuit id: 9ca6cba0-8888-11ed-375f-ef0c51f31fc8   qubit: 2
+Plugout = Circuit id: 9cb39ce0-8888-11ed-05d5-bff313ab1874   qubit: 1
+Connector 5
+Plugin  = Circuit id: 9ca6cba0-8888-11ed-375f-ef0c51f31fc8   qubit: 3
+Plugout = Circuit id: 9cb39ce0-8888-11ed-05d5-bff313ab1874   qubit: 2
+Connector 6
+Plugin  = Circuit id: 9ca6cba0-8888-11ed-375f-ef0c51f31fc8   qubit: 4
+Plugout = Circuit id: 9cb39ce0-8888-11ed-05d5-bff313ab1874   qubit: 3
+Connector 7
+Plugin  = Circuit id: 9cb39ce0-8888-11ed-05d5-bff313ab1874   qubit: 2
+Plugout = Circuit id: 9cc3062e-8888-11ed-2d41-45f511d1ab58   qubit: 1
+Connector 8
+Plugin  = Circuit id: 9cb39ce0-8888-11ed-05d5-bff313ab1874   qubit: 3
+Plugout = Circuit id: 9cc3062e-8888-11ed-2d41-45f511d1ab58   qubit: 2
+Connector 9
+Plugin  = Circuit id: 9cb39ce0-8888-11ed-05d5-bff313ab1874   qubit: 4
+Plugout = Circuit id: 9cc3062e-8888-11ed-2d41-45f511d1ab58   qubit: 3
+Connector 10
+Plugin  = Circuit id: 9cc3062e-8888-11ed-2d41-45f511d1ab58   qubit: 1
+Plugout = Circuit id: 9ccb6aa0-8888-11ed-02ee-d37c6c44d379   qubit: 3
+Connector 11
+Plugin  = Circuit id: 9cc3062e-8888-11ed-2d41-45f511d1ab58   qubit: 3
+Plugout = Circuit id: 9ccb6aa0-8888-11ed-02ee-d37c6c44d379   qubit: 2
+Connector 12
+Plugin  = Circuit id: 9cc3062e-8888-11ed-2d41-45f511d1ab58   qubit: 4
+Plugout = Circuit id: 9ccb6aa0-8888-11ed-02ee-d37c6c44d379   qubit: 5
+
+julia&gt; newcq = shsew(mqc)
+Quantum Circuit Object:
+   id: ac5ded7e-8888-11ed-3316-75f366b5ec40
+   qubit_count: 10
+   bit_count: 0
+Part 1 of 2
+q[1]: ──H────*────X────*───────────────────*────Z─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+             |         |                   |    |
+q[2]: ───────X─────────Z──────────────*────|────|────H────*────X────*───────────────────*────Z────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+                                      |    |    |         |         |                   |    |
+q[3]: ──────────────────────H─────────|────Z────|─────────X─────────Z──────────────*────|────|────H────*────X────*───────────────────*────Z───────────────────────────────────────────────────────────────────
+                                      |         |                                  |    |    |         |         |                   |    |
+q[4]: ───────────────────────────H────Z─────────*────────────────────────H─────────|────Z────|─────────X─────────Z──────────────*────|────|────H────*────X────*───────────────────*────Z──────────────────────
+                                                                                   |         |                                  |    |    |         |         |                   |    |
+q[5]: ────────────────────────────────────────────────────────────────────────H────Z─────────*────────────────────────H─────────|────Z────|─────────X─────────Z──────────────*────|────|──────────────────────
+                                                                                                                                |         |                                  |    |    |
+q[6]: ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────H────Z─────────*────────────────────────H─────────|────Z────|───────────────────X──
+                                                                                                                                                                             |         |                   |  
+q[7]: ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────H────Z─────────*─────────H─────────|──
+                                                                                                                                                                                                           |
+q[8]: ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────H──────────────*──
+
+q[9]: ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+q[10]:────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────H───────
+
+
+Part 2 of 2
+q[1]: ──────────────────────────────────────────────────
+
+q[2]: ──────────────────────────────────────────────────
+
+q[3]: ──────────────────────────────────────────────────
+
+q[4]: ────────────H──────────────Z─────────X────────────
+                                 |         |
+q[5]: ───────────────────────────|─────────|────────────
+                                 |         |
+q[6]: ───────Z──────────────*────|─────────|─────────*──
+             |              |    |         |         |
+q[7]: ───────|──────────────|────|─────────*─────────|──
+             |              |    |                   |
+q[8]: ──X────*──────────────|────*────Z──────────────|──
+                            |         |              |
+q[9]: ─────────────────H────Z─────────*─────────X────|──
+                                                |    |
+q[10]:──────────────────────────────────────────*────X──</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/07cf48bed3adf28b8a29e1c0f13c960f92143411/src/MQC.jl#L710-L813">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.shQuantumCircuit" href="#Shovel.shQuantumCircuit"><code>Shovel.shQuantumCircuit</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">shQuantumCircuit</code></pre><p>shQuantumCircuit is a structure holding additional descriptive information for rgw Quantum circuits such as a label for circuits and angle  information for rotation gates R<em>x, R</em>y, R_y and the generic rotation gate.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/07cf48bed3adf28b8a29e1c0f13c960f92143411/src/ToLaTeX.jl#L6-L11">source</a></section></article><h2 id="LaTeX-utilities"><a class="docs-heading-anchor" href="#LaTeX-utilities">LaTeX utilities</a><a id="LaTeX-utilities-1"></a><a class="docs-heading-anchor-permalink" href="#LaTeX-utilities" title="Permalink"></a></h2><p>Snowflake aloows to display a circuit on the screen. However, for scientific resaerch or educational purpose, it is often required to produce a LaTeX document. These utilities allow for a conversion of either a Snowflake circuit or a shMQC into Quantikz/Latex format.</p><p>Additionally, it is also possible to display the resulting operator of a circuit into textual forme. The resulting string matrix is often very large and difficult to read but elements of it can be inspected to better understand what is going on. This is usefull only on relatively small circuits and is of educational interest for beginners.</p><article class="docstring"><header><a class="docstring-binding" id="Shovel.shLaTeX" href="#Shovel.shLaTeX"><code>Shovel.shLaTeX</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">shLaTeX(pattern::String, str::String)::String</code></pre><p>This function will substitute &quot;pattern&quot; inside str by &quot;\pattern&quot;. This is mostly used when pattern = sin, cos or sqrt. It is used in the process of formatting states and operator in string format as  generated by <a href="#Shovel.shoperator"><code>shoperator</code></a></p><p>In the example below, all occurence of the string &quot;cos&quot; are replaced by &quot;\cos&quot;.</p><p><strong>Example</strong></p><pre><code class="nohighlight hljs">julia&gt; text = &quot;1/sqrt{2}cos(1.2/2)+1/sqrt{2}-sin(1.2/2)cos(0.69/2)cos(1.99/2)+1/sqrt{2}cos(1.2/2)+1/sqrt{2}-sin(1.2/2)sin(0.69/2)-sin(1.99/2)cos(1.99/2)+1/sqrt{2}cos(1.2/2)+1/sqrt{2}&quot;;
+julia&gt; shLaTeX(&quot;cos&quot;, text)
+&quot;1/sqrt{2}\cos(1.2/2)+1/sqrt{2}-sin(1.2/2)\cos(0.69/2)\cos(1.99/2)+1/sqrt{2}\cos(1.2/2)+1/sqrt{2}-sin(1.2/2)sin(0.69/2)-sin(1.99/2)\cos(1.99/2)+1/sqrt{2}\cos(1.2/2)+1/sqrt{2}&quot;</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/07cf48bed3adf28b8a29e1c0f13c960f92143411/src/ToLaTeX.jl#L40-L53">source</a></section><section><div><pre><code class="nohighlight hljs">shLaTeX(str::String)::String</code></pre><p>This function will substitute &quot;cos&quot; by &quot;\cos&quot;, &quot;sin&quot; by &quot;\sin&quot; and &quot;sqrt&quot; by &quot;\sqrt&quot; in str.</p><p><strong>Example</strong></p><pre><code class="nohighlight hljs">julia&gt; text = &quot;1/sqrt{2}cos(1.2/2)+1/sqrt{2}-sin(1.2/2)cos(0.69/2)cos(1.99/2)+1/sqrt{2}cos(1.2/2)+1/sqrt{2}-sin(1.2/2)sin(0.69/2)-sin(1.99/2)cos(1.99/2)+1/sqrt{2}cos(1.2/2)+1/sqrt{2}&quot;
+julia&gt; shLaTeX(text)
+&quot;1/\sqrt{2}\cos(1.2/2)+1/\sqrt{2}-\sin(1.2/2)\cos(0.69/2)\cos(1.99/2)+1/\sqrt{2}\cos(1.2/2)+1/\sqrt{2}-\sin(1.2/2)\sin(0.69/2)-\sin(1.99/2)\cos(1.99/2)+1/\sqrt{2}\cos(1.2/2)+1/\sqrt{2}&quot;</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/07cf48bed3adf28b8a29e1c0f13c960f92143411/src/ToLaTeX.jl#L70-L80">source</a></section><section><div><pre><code class="nohighlight hljs">shLaTeX(c::QuantumCircuit, FName::String)::Bool</code></pre><p>Will generate a file containing the LaTeX/quantikz code in the standalone documentclass.</p><p><strong>Arguments</strong></p><ul><li><code>circuit::QuantumCircuit</code>: a QuantumCircuit as defined by Snowflake</li><li><code>FName::String</code>: the name of the file to create. Warning! It will overwrite if already existing. If omitted it will print to stdout</li></ul><p><strong>Example</strong></p><pre><code class="nohighlight hljs">julia&gt; c = QuantumCircuit(qubit_count=3, bit_count=0);
+... (a bunch of &quot;push_gate!&quot; goes here)
+julia&gt; shLaTeX(c);
+\begin{quantikz}
+\lstick{q[1]: } &amp; \gate{H} &amp; \gate{Ry(1.2)} &amp; \qw &amp; \ctrl{1} &amp; \ctrl{2} &amp; \ctrl{1} &amp; \qw &amp; \ctrl{1} &amp; \ctrl{2} &amp; \qw &amp; \qw &amp; \qw \\
+\lstick{q[2]: } &amp; \qw &amp; \qw &amp; \qw &amp; \gate{X} &amp; \qw &amp; \gate{X} &amp; \qw &amp; \gate{X} &amp; \qw &amp; \qw &amp; \gate{Rx(-0.29)} &amp; \qw \\
+\lstick{q[3]: } &amp; \qw &amp; \qw &amp; \gate{Rx(0.69)} &amp; \qw &amp; \gate{X} &amp; \qw &amp; \gate{Ry(1.99)} &amp; \qw &amp; \gate{X} &amp; \gate{Ry(1.99)} &amp; \qw &amp; \qw
+\end{quantikz}</code></pre><p>This is an example of the output file generated by shLaTeX(). It can be copy&amp;paste to any other Latex document.</p><pre><code class="nohighlight hljs">\documentclass{standalone}
 \usepackage{tikz}
 \usetikzlibrary{quantikz}
 \begin{document}
 
 \begin{quantikz}
-\lstick{q[1]: } &amp;  \gate{H} &amp;  \ctrl{1} &amp;  \gate{X} &amp;  \ctrl{1} &amp;  \qw &amp;  \qw &amp;  \qw &amp;  \ctrl{2} &amp;  \gate{Z} &amp;  \qw \\
-\lstick{q[2]: } &amp;  \qw &amp;  \gate{X} &amp;  \qw &amp;  \gate{Z} &amp;  \qw &amp;  \qw &amp;  \ctrl{2} &amp; \qw &amp;\qw &amp; \qw \\
-\lstick{q[3]: } &amp;  \qw &amp;  \qw &amp;  \qw &amp;  \qw &amp;  \gate{H} &amp;  \qw &amp; \qw &amp; \gate{Z} &amp; \qw &amp; \qw \\
-\lstick{q[4]: } &amp;  \qw &amp;  \qw &amp;  \qw &amp;  \qw &amp;  \qw &amp;  \gate{H} &amp;  \gate{Z} &amp;  \qw &amp;  \ctrl{-3} &amp;  \qw 
+\lstick{q[1]: } &amp; \gate{H} &amp; \gate{Ry(1.2)} &amp; \qw &amp; \ctrl{1} &amp; \ctrl{2} &amp; \ctrl{1} &amp; \qw &amp; \ctrl{1} &amp; \ctrl{2} &amp; \qw &amp; \qw &amp; \qw \\ 
+\lstick{q[2]: } &amp; \qw &amp; \qw &amp; \qw &amp; \gate{X} &amp; \qw &amp; \gate{X} &amp; \qw &amp; \gate{X} &amp; \qw &amp; \qw &amp; \gate{Rx(-0.29)} &amp; \qw \\ 
+\lstick{q[3]: } &amp; \qw &amp; \qw &amp; \gate{Rx(0.69)} &amp; \qw &amp; \gate{X} &amp; \qw &amp; \gate{Ry(1.99)} &amp; \qw &amp; \gate{X} &amp; \gate{Ry(1.99)} &amp; \qw &amp; \qw
 \end{quantikz}
-\end{document}</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/9aa5ff3b4e7c5442e2ffe54f273e2192bab8b556/src/ToLaTeX.jl#L73-L101">source</a></section><section><div><pre><code class="nohighlight hljs">shLaTeX(mat::Matrix{String})</code></pre><p>Will convert to LaTeX the operator matrix generated by <a href="#Shovel.shoperator"><code>shoperator</code></a></p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/9aa5ff3b4e7c5442e2ffe54f273e2192bab8b556/src/ToLaTeX.jl#L192-L196">source</a></section><section><div><pre><code class="nohighlight hljs">shLaTeX(mqc::shMQC, FName = &quot;&quot;)::Bool</code></pre><p><strong>Arguments</strong></p><ul><li><code>mqc::shMQC</code>: a Meta Quantum Circuit as defined by Shovel</li><li><code>FName::String</code>: the name of the file to create. Warning! It will overwrite if already existing. If omitted it will print to stdout</li></ul><p><strong>Example</strong></p><pre><code class="language-julia-repl hljs">julia&gt; shLaTeX(mqc, &quot;Foo.bar&quot;)
-</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/9aa5ff3b4e7c5442e2ffe54f273e2192bab8b556/src/ToLaTeX.jl#L211-L222">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.shoperator" href="#Shovel.shoperator"><code>Shovel.shoperator</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">shoperator(c::QuantumCircuit)::Matrix{String}</code></pre><p>Returns, in string format, the resulting operator of a quantum circuit</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/9aa5ff3b4e7c5442e2ffe54f273e2192bab8b556/src/ToLaTeX.jl#L653-L657">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.shinit1qubit!" href="#Shovel.shinit1qubit!"><code>Shovel.shinit1qubit!</code></a> — <span class="docstring-category">Function</span></header><section><div><p>shinit1qubit!(probability::Float64)::QuantumCircuit</p><p>Will return a 1 qubit QuantumCircuit initialized such that its probability of being equal to 0 is equal to &quot;probability&quot;</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/9aa5ff3b4e7c5442e2ffe54f273e2192bab8b556/src/InitProb.jl#L4-L8">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.shinit2qubits!" href="#Shovel.shinit2qubits!"><code>Shovel.shinit2qubits!</code></a> — <span class="docstring-category">Function</span></header><section><div><p>shinit2qubits!(probability::Vector{Float64})::QuantumCircuit</p><p>Will return a 2 qubits QuantumCircuit initialize such that the probabilities of the 4 possible outcome are equal to the values provided by the vector &quot;probabilities&quot;</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/9aa5ff3b4e7c5442e2ffe54f273e2192bab8b556/src/InitProb.jl#L22-L26">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.Plug" href="#Shovel.Plug"><code>Shovel.Plug</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">Plug(c::QuantumCircuit, qb::Int)</code></pre><p>Plug is a structure containing the UUID of a circuit and a qubit number. It is the basic element of a Connector. The only validation done is that the qubit number of the circuit is valid (&gt;0 and &lt;=qubit_count).</p><p>The comparison operator &quot;==&quot; is defined for plugs and returns true with both plugs connect the same qubits of the same circuits.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/9aa5ff3b4e7c5442e2ffe54f273e2192bab8b556/src/MQC.jl#L2-L9">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.Connector" href="#Shovel.Connector"><code>Shovel.Connector</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">Connector(plg1::Plug, plg2::Plug)
-Connector(c1::QuantumCircuit, qb1::Int, c2::QuantumCircuit, qb2::Int)</code></pre><p>Connector is a structure containing two plugs: 1) the input plug which is when the qubit/circuit is coming from and 2) the output plug indicating to which qubit/circuit it is going to. Users can either create plugs and then a connector from them or directly create a connector by providing the circuit and the qubit.</p><p>The comparison operator &quot;==&quot; is defined for connectors and returns true if they have the same plugs from the same circuits IN THE SAME ORDER. If the two connectors have the same plugs but in REVERSE order, then  function &quot;isreverse&quot; should be used to check.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/9aa5ff3b4e7c5442e2ffe54f273e2192bab8b556/src/MQC.jl#L26-L36">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.isinverse" href="#Shovel.isinverse"><code>Shovel.isinverse</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">isinverse(connec1::Connector, connec2::Connector)::Bool</code></pre><p>A function to checks if a given connector is the inverse of another one. The function is used for internal consistency when a connector is added to an MQC. it will return true if  &quot;connec1.plugin == connec2.plugout &amp;&amp; connec1.plugin == connec2.plugout&quot; and false otherwise.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/9aa5ff3b4e7c5442e2ffe54f273e2192bab8b556/src/MQC.jl#L59-L65">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.isbefore" href="#Shovel.isbefore"><code>Shovel.isbefore</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">isbefore(connec1::Connector, connec2::Connector)::Bool</code></pre><p>A function to checks if the output plug of connec1 is the same as the input plug of connec2. If true, it means that connec1 is just before connec2 and they are connected together in the same wire.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/9aa5ff3b4e7c5442e2ffe54f273e2192bab8b556/src/MQC.jl#L75-L79">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.shprintlightQC" href="#Shovel.shprintlightQC"><code>Shovel.shprintlightQC</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">shprintlightQC(io::IO, circuit::QuantumCircuit)</code></pre><p>A quick display of basic info on a QuantumCircuit</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/9aa5ff3b4e7c5442e2ffe54f273e2192bab8b556/src/MQC.jl#L167-L171">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.shMQC" href="#Shovel.shMQC"><code>Shovel.shMQC</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">shMQC</code></pre><p>The structure shMQC is the main element of the Meta Quantum Circuit utility. After adding quantum circuits (or &quot;circuits&quot; for short) and connector_list, a quantikz/LaTeX file can be produced. Most importantly, a new circuit can be generated from the shMQC. </p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/9aa5ff3b4e7c5442e2ffe54f273e2192bab8b556/src/MQC.jl#L152-L158">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.printshMQC" href="#Shovel.printshMQC"><code>Shovel.printshMQC</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">printshMQC(io::IO, mqc::shMQC)</code></pre><p>Summary print of what&#39;s inside a shMQC</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/9aa5ff3b4e7c5442e2ffe54f273e2192bab8b556/src/MQC.jl#L177-L181">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.shMQCAddCircuit" href="#Shovel.shMQCAddCircuit"><code>Shovel.shMQCAddCircuit</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">shMQCAddCircuit(mqc::MQC, newc::QuantumCircuit)::Bool</code></pre><p>This function is used to add a Snowflake QuantumCircuit to an shMQC. A given circuit cannot be add twice ot the shMQC. However, two distinct circuits with identical circuitry can as long as their id is different. The function will retrun true if the addition was successful.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/9aa5ff3b4e7c5442e2ffe54f273e2192bab8b556/src/MQC.jl#L201-L207">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.shMQCAddConnector" href="#Shovel.shMQCAddConnector"><code>Shovel.shMQCAddConnector</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">shMQCAddConnector(mqc::shMQC, connec::Connector)::Bool</code></pre><p>This function is used to add a connector to an MQC. It has some consistancy checks and will return false if the proposed connector creates inconsistencies such as circular circuitry or duplicate plugs.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/9aa5ff3b4e7c5442e2ffe54f273e2192bab8b556/src/MQC.jl#L222-L226">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.shsew" href="#Shovel.shsew"><code>Shovel.shsew</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">shsew(mqc::shMQC)::QuantumCircuit</code></pre><p>This function takes an shMQC and returns a standard Snowflake QuantumCircuit equivalent. This is the main goal of the shMQC concept.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/9aa5ff3b4e7c5442e2ffe54f273e2192bab8b556/src/MQC.jl#L508-L512">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.shQuantumCircuit" href="#Shovel.shQuantumCircuit"><code>Shovel.shQuantumCircuit</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">shQuantumCircuit</code></pre><p>shQuantumCircuit is a structure holding additional descriptive information for rgw Quantum circuits such as a label for circuits and angle  information for rotation gates R<em>x, R</em>y, R_y and the generic rotation gate.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/9aa5ff3b4e7c5442e2ffe54f273e2192bab8b556/src/ToLaTeX.jl#L6-L11">source</a></section></article></article><nav class="docs-footer"><a class="docs-footer-nextpage" href="Stop/">Estimation for a single qubit »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.23 on <span class="colophon-date" title="Thursday 29 December 2022 12:16">Thursday 29 December 2022</span>. Using Julia version 1.8.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+\end{document}</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/07cf48bed3adf28b8a29e1c0f13c960f92143411/src/ToLaTeX.jl#L88-L121">source</a></section><section><div><pre><code class="nohighlight hljs">shLaTeX(mat::Matrix{String})</code></pre><p>Will convert to LaTeX the operator matrix generated by <a href="#Shovel.shoperator"><code>shoperator</code></a>  A garder??? In the example above a Kroneker product of a CNOT circuit by an Hadamard circuit (both in &quot;string&quot; version) is generated. The function shLaTeX is then used to produce the LaTeX version of it.</p><pre><code class="nohighlight hljs">julia&gt; mat2 = shcnot(1,2,2);
+julia&gt; mat3 = shhadamard();
+julia&gt; mat4 = shkron(mat3,mat2)
+8×8 Matrix{String}:
+ &quot;1/sqrt{2}&quot;  &quot;0&quot;          &quot;0&quot;          &quot;0&quot;          &quot;1/sqrt{2}&quot;   &quot;0&quot;           &quot;0&quot;           &quot;0&quot;
+ &quot;0&quot;          &quot;1/sqrt{2}&quot;  &quot;0&quot;          &quot;0&quot;          &quot;0&quot;           &quot;1/sqrt{2}&quot;   &quot;0&quot;           &quot;0&quot;
+ &quot;0&quot;          &quot;0&quot;          &quot;0&quot;          &quot;1/sqrt{2}&quot;  &quot;0&quot;           &quot;0&quot;           &quot;0&quot;           &quot;1/sqrt{2}&quot;
+ &quot;0&quot;          &quot;0&quot;          &quot;1/sqrt{2}&quot;  &quot;0&quot;          &quot;0&quot;           &quot;0&quot;           &quot;1/sqrt{2}&quot;   &quot;0&quot;
+ &quot;1/sqrt{2}&quot;  &quot;0&quot;          &quot;0&quot;          &quot;0&quot;          &quot;-1/sqrt{2}&quot;  &quot;0&quot;           &quot;0&quot;           &quot;0&quot;
+ &quot;0&quot;          &quot;1/sqrt{2}&quot;  &quot;0&quot;          &quot;0&quot;          &quot;0&quot;           &quot;-1/sqrt{2}&quot;  &quot;0&quot;           &quot;0&quot;
+ &quot;0&quot;          &quot;0&quot;          &quot;0&quot;          &quot;1/sqrt{2}&quot;  &quot;0&quot;           &quot;0&quot;           &quot;0&quot;           &quot;-1/sqrt{2}&quot;
+ &quot;0&quot;          &quot;0&quot;          &quot;1/sqrt{2}&quot;  &quot;0&quot;          &quot;0&quot;           &quot;0&quot;           &quot;-1/sqrt{2}&quot;  &quot;0&quot;
+ julia&gt; shLaTeX(mat4)
+ \begin{bmatrix}
+ 1/\sqrt{2} &amp;0 &amp;0 &amp;0 &amp;1/\sqrt{2} &amp;0 &amp;0 &amp;0 \\
+ 0 &amp;1/\sqrt{2} &amp;0 &amp;0 &amp;0 &amp;1/\sqrt{2} &amp;0 &amp;0 \\
+ 0 &amp;0 &amp;0 &amp;1/\sqrt{2} &amp;0 &amp;0 &amp;0 &amp;1/\sqrt{2} \\
+ 0 &amp;0 &amp;1/\sqrt{2} &amp;0 &amp;0 &amp;0 &amp;1/\sqrt{2} &amp;0 \\
+ 1/\sqrt{2} &amp;0 &amp;0 &amp;0 &amp;-1/\sqrt{2} &amp;0 &amp;0 &amp;0 \\
+ 0 &amp;1/\sqrt{2} &amp;0 &amp;0 &amp;0 &amp;-1/\sqrt{2} &amp;0 &amp;0 \\
+ 0 &amp;0 &amp;0 &amp;1/\sqrt{2} &amp;0 &amp;0 &amp;0 &amp;-1/\sqrt{2} \\
+ 0 &amp;0 &amp;1/\sqrt{2} &amp;0 &amp;0 &amp;0 &amp;-1/\sqrt{2} &amp;0 \\
+ \end{bmatrix}</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/07cf48bed3adf28b8a29e1c0f13c960f92143411/src/ToLaTeX.jl#L212-L243">source</a></section><section><div><pre><code class="nohighlight hljs">shLaTeX(mqc::shMQC, FName = &quot;&quot;)::Bool</code></pre><p><strong>Arguments</strong></p><ul><li><code>mqc::shMQC</code>: a Meta Quantum Circuit as defined by Shovel</li><li><code>FName::String</code>: the name of the file to create. Warning! It will overwrite if already existing. If omitted it will print to stdout</li></ul><p>A <a href="#Shovel.shMQC"><code>shMQC</code></a> is usually large and only used as an intermediate step before being transformed into a Snowflake QuantumCircuit. It is nevertheless possible to produce a meaningful LaTeX output that can be analysed for troubleshooting.</p><p><strong>Example</strong></p><pre><code class="nohighlight hljs">julia&gt; shLaTeX(mqc, &quot;Foo.bar&quot;)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/07cf48bed3adf28b8a29e1c0f13c960f92143411/src/ToLaTeX.jl#L258-L271">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.shstrmult" href="#Shovel.shstrmult"><code>Shovel.shstrmult</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">shstrmult(s1::String, s2::String)::String will lexicographically multiply (concatenate) two strings.</code></pre><p>The concatenation will follow the following rules: shstrmult(&quot;0&quot;, &quot;a string&quot;) =&gt; &quot;0&quot; shstrmult(&quot;1&quot;, &quot;a string&quot;) =&gt; &quot;a string&quot; shstrmult(&quot;a string&quot;, &quot;0&quot;) =&gt; &quot;0&quot; shstrmult(&quot;a string&quot;, &quot;1&quot;) =&gt; &quot;a string&quot; Otherwise shstrmult(&quot;a string&quot;, &quot;-a second string&quot;) =&gt; &quot;a string-a second string&quot;</p><p>The arithmetic defined by shstrmult is at the base of the arithmetic of matric multiplication <a href="#Shovel.shmult"><code>shmult</code></a> and Kroneker product <a href="#Shovel.shkron"><code>shkron</code></a> of string matrix for operators.</p><pre><code class="nohighlight hljs">julia&gt; a = &quot;0&quot; ; b= &quot;a string&quot;;
+
+julia&gt; shstrmult(a,b)
+&quot;0&quot;
+
+julia&gt; c = &quot;1&quot;;
+
+julia&gt; shstrmult(c,b)
+&quot;a string&quot;
+
+julia&gt; shstrmult(c,a)
+&quot;0&quot;</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/07cf48bed3adf28b8a29e1c0f13c960f92143411/src/ToLaTeX.jl#L393-L419">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.shmult" href="#Shovel.shmult"><code>Shovel.shmult</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">shmult(mat1::Matrix{String}, mat2::Matrix{String})::Matrix{String} will perform the lexicographic multiplication of two string matrices. It is based on the rules for function shstrmult()</code></pre><p>This will perform the matrix multiplication mat1 × mat2 using String matrices using the same rules as shstrmult.</p><p><strong>Parameters</strong></p><ul><li>mat1 and mat2 have to satisfy size(mat1)[2] == size(mat2)[1]</li></ul><p>The return matrix will have size (size(mat1)[1], size(mat2)[2])</p><p><strong>Example 1</strong></p><pre><code class="nohighlight hljs">julia&gt; A = [ &quot;a&quot; &quot;b&quot; ; &quot;c&quot; &quot;d&quot; ];
+
+julia&gt; B = [ &quot;e&quot; &quot;f&quot; ; &quot;g&quot; &quot;h&quot; ; &quot;i&quot; &quot;j&quot; ];
+
+julia&gt; C = shmult(B, A)
+3×2 Matrix{String}:
+ &quot;ea+fc&quot;  &quot;eb+fd&quot;
+ &quot;ga+hc&quot;  &quot;gb+hd&quot;
+ &quot;ia+jc&quot;  &quot;ib+jd&quot;</code></pre><p><strong>Example 2</strong></p><pre><code class="nohighlight hljs">julia&gt; A = [ &quot;1&quot; &quot;b&quot; ; &quot;c&quot; &quot;0&quot; ];
+
+julia&gt; B = [ &quot;e&quot; &quot;f&quot; ; &quot;g&quot; &quot;h&quot; ; &quot;i&quot; &quot;j&quot; ];
+
+julia&gt; C = shmult(B, A)
+3×2 Matrix{String}:
+ &quot;e+fc&quot;  &quot;eb&quot;
+ &quot;g+hc&quot;  &quot;gb&quot;
+ &quot;i+jc&quot;  &quot;ib&quot;</code></pre><p>As can be seen in the second example, the fact that A[1,1] = &quot;1&quot; makes it irrelevant and it is simply remove ( &quot;1&quot; * &quot;any<em>string&quot; = &quot;any</em>string&quot;).  Hereas, A[2,2] = &quot;0&quot; which implies that and multiplycation results into &quot;0&quot; and will be removed unless it is alone (&quot;0&quot; + &quot;any<em>string&quot; = &quot;any</em>string&quot;, but &quot;0&quot; + nothing = &quot;0&quot;)</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/07cf48bed3adf28b8a29e1c0f13c960f92143411/src/ToLaTeX.jl#L430-L466">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.shkron" href="#Shovel.shkron"><code>Shovel.shkron</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">shkron(mat1::Matrix{String}, mat2::Matrix{String})::Matrix{String} will perform the lexicographic Kroneker product of two matrices.</code></pre><p>Kroneker product of two string matrices. Here again, the logic of shstrmult is used to remove unneeded &quot;0&quot; and &quot;1&quot;</p><p><strong>Example 1</strong></p><pre><code class="nohighlight hljs">julia&gt; A = [ &quot;a&quot; &quot;b&quot; ; &quot;c&quot; &quot;d&quot; ];
+
+julia&gt; B = [ &quot;e&quot; &quot;f&quot; ; &quot;g&quot; &quot;h&quot; ; &quot;i&quot; &quot;j&quot; ];
+
+julia&gt; C = shkron(B, A)
+6×4 Matrix{String}:
+ &quot;ea&quot;  &quot;eb&quot;  &quot;fa&quot;  &quot;fb&quot;
+ &quot;ec&quot;  &quot;ed&quot;  &quot;fc&quot;  &quot;fd&quot;
+ &quot;ga&quot;  &quot;gb&quot;  &quot;ha&quot;  &quot;hb&quot;
+ &quot;gc&quot;  &quot;gd&quot;  &quot;hc&quot;  &quot;hd&quot;
+ &quot;ia&quot;  &quot;ib&quot;  &quot;ja&quot;  &quot;jb&quot;
+ &quot;ic&quot;  &quot;id&quot;  &quot;jc&quot;  &quot;jd&quot;</code></pre><p><strong>Example 2</strong></p><p>In this second example a value of B is equal to &quot;0&quot; and another is equal to &quot;1&quot;.</p><pre><code class="nohighlight hljs">julia&gt; A = [ &quot;a&quot; &quot;b&quot; ; &quot;c&quot; &quot;d&quot; ];
+
+julia&gt; B = [ &quot;e&quot; &quot;0&quot; ; &quot;1&quot; &quot;h&quot; ; &quot;i&quot; &quot;j&quot; ];
+
+julia&gt; C = shkron(B, A)
+6×4 Matrix{String}:
+ &quot;ea&quot;  &quot;eb&quot;  &quot;0&quot;   &quot;0&quot;
+ &quot;ec&quot;  &quot;ed&quot;  &quot;0&quot;   &quot;0&quot;
+ &quot;a&quot;   &quot;b&quot;   &quot;ha&quot;  &quot;hb&quot;
+ &quot;c&quot;   &quot;d&quot;   &quot;hc&quot;  &quot;hd&quot;
+ &quot;ia&quot;  &quot;ib&quot;  &quot;ja&quot;  &quot;jb&quot;
+ &quot;ic&quot;  &quot;id&quot;  &quot;jc&quot;  &quot;jd&quot;</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/07cf48bed3adf28b8a29e1c0f13c960f92143411/src/ToLaTeX.jl#L505-L542">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.shrx" href="#Shovel.shrx"><code>Shovel.shrx</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">shrx(gate::Gate)::Matrix{String}</code></pre><p>Returns the string expression of the operator of gate doing a rotation around the X axis using the information provided in a Gate (gate.parameters[1]).</p><p><strong>Example</strong></p><pre><code class="nohighlight hljs">julia&gt; gate = rotation_x(2, 0.20)
+Gate Object:
+instruction symbol: rx
+parameters: [0.2]
+targets: [2]
+operator:
+(2, 2)-element Snowflake.Operator:
+Underlying data Matrix{Complex}:
+0.9950041652780258 + 0.0im    0.0 - 0.09983341664682815im
+0.0 - 0.09983341664682815im    0.9950041652780258 + 0.0im
+
+julia&gt; shrx(gate)
+2×2 Matrix{String}:
+ &quot;cos(0.2/2)&quot;   &quot;sin(0.2/2)&quot;
+ &quot;sin(0.2/2)i&quot;  &quot;cos(0.2/2)&quot;</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/07cf48bed3adf28b8a29e1c0f13c960f92143411/src/ToLaTeX.jl#L563-L586">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.shry" href="#Shovel.shry"><code>Shovel.shry</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">shry(gate::Gate)::Matrix{String}</code></pre><p>Returns the Latex expression of the operator of gate doing a rotation around the Y axis using the information provided in a Gate (gate.parameters[1]).</p><p><strong>Example</strong></p><pre><code class="nohighlight hljs">julia&gt; gate = rotation_y(1, 1.3)
+Gate Object:
+instruction symbol: ry
+parameters: [1.3]
+targets: [1]
+operator:
+(2, 2)-element Snowflake.Operator:
+Underlying data Matrix{Complex}:
+0.7960837985490558 + 0.0im    -0.6051864057360395 - 3.705697973360661e-17im
+0.6051864057360395 - 3.705697973360661e-17im    0.7960837985490558 + 0.0im
+
+
+julia&gt; shry(gate)
+2×2 Matrix{String}:
+ &quot;cos(1.3/2)&quot;   &quot;sin(1.3/2)&quot;
+ &quot;-sin(1.3/2)&quot;  &quot;cos(1.3/2)&quot;</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/07cf48bed3adf28b8a29e1c0f13c960f92143411/src/ToLaTeX.jl#L598-L622">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.shr" href="#Shovel.shr"><code>Shovel.shr</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">shr(gate::Gate)::Matrix{String}</code></pre><p>Returns the Latex expression of the operator of gate doing a rotation with θ and ϕ axis using the information provided in shcircuits.</p><p><strong>Example</strong></p><pre><code class="nohighlight hljs">julia&gt; gate = rotation(1, 1.9, 2.1)
+Gate Object:
+instruction symbol: r
+parameters: [1.9, 2.1]
+targets: [1]
+operator:
+(2, 2)-element Snowflake.Operator:
+Underlying data Matrix{Complex}:
+0.5816830894638835 + 0.0im    -0.7021478827116092 + 0.4106496490140421im
+0.7021478827116092 + 0.4106496490140421im    0.5816830894638835 + 0.0im
+
+
+julia&gt; shr(gate)
+2×2 Matrix{String}:
+ &quot;cos(1.9/2}&quot;            &quot;-ie^{-i2.1}sin(1.9/2)&quot;
+ &quot;-ie^{i2.1}sin(1.9/2)&quot;  &quot;cos(1.9/2}&quot;</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/07cf48bed3adf28b8a29e1c0f13c960f92143411/src/ToLaTeX.jl#L670-L694">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.shhadamard" href="#Shovel.shhadamard"><code>Shovel.shhadamard</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">shry(gate::Gate)::Matrix{String}</code></pre><p>Returns the Latex expression of the operator of a Hadamard gate no information needs to be provided in shcircuits for that type of circuit.</p><p><strong>Example</strong></p><pre><code class="nohighlight hljs">julia&gt; shhadamard()
+2×2 Matrix{String}:
+ &quot;1/sqrt{2}&quot;  &quot;1/sqrt{2}&quot;
+ &quot;1/sqrt{2}&quot;  &quot;-1/sqrt{2}&quot;</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/07cf48bed3adf28b8a29e1c0f13c960f92143411/src/ToLaTeX.jl#L706-L718">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.shid" href="#Shovel.shid"><code>Shovel.shid</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">shid()()::Matrix{String}</code></pre><p>Returns a simple identity matrix in string format.</p><p><strong>Example</strong></p><pre><code class="nohighlight hljs">julia&gt; shid()
+2×2 Matrix{String}:
+ &quot;1&quot;  &quot;0&quot;
+ &quot;0&quot;  &quot;1&quot;</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/07cf48bed3adf28b8a29e1c0f13c960f92143411/src/ToLaTeX.jl#L724-L736">source</a></section><section><div><pre><code class="nohighlight hljs">shid(N::Int)::Matrix{String}</code></pre><p>Returns the 2^N X 2^N identity matrix in string format.</p><p><strong>Example</strong></p><pre><code class="nohighlight hljs">julia&gt; shid(3)
+8×8 Matrix{String}:
+ &quot;1&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;
+ &quot;0&quot;  &quot;1&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;
+ &quot;0&quot;  &quot;0&quot;  &quot;1&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;
+ &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;1&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;
+ &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;1&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;
+ &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;1&quot;  &quot;0&quot;  &quot;0&quot;
+ &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;1&quot;  &quot;0&quot;
+ &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;1&quot;</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/07cf48bed3adf28b8a29e1c0f13c960f92143411/src/ToLaTeX.jl#L741-L759">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.shcnot" href="#Shovel.shcnot"><code>Shovel.shcnot</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">shcnot()::Matrix{String}</code></pre><p>Returns the 4x4 CNOT matrix in string format.</p><p><strong>Example</strong></p><pre><code class="nohighlight hljs">julia&gt; shcnot()
+4×4 Matrix{String}:
+ &quot;1&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;
+ &quot;0&quot;  &quot;1&quot;  &quot;0&quot;  &quot;0&quot;
+ &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;1&quot;
+ &quot;0&quot;  &quot;0&quot;  &quot;1&quot;  &quot;0&quot;</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/07cf48bed3adf28b8a29e1c0f13c960f92143411/src/ToLaTeX.jl#L770-L784">source</a></section><section><div><pre><code class="nohighlight hljs">shcnot(crtl::Int, trgt::Int, N::Int)::Matrix{String}</code></pre><p>Returns, in string format, the CNOT matrix for a set of N qubits where the control qubit is at position crtl and the target is at position trgt wit (trgt&gt;crtl).</p><p><strong>Example</strong></p><pre><code class="nohighlight hljs">julia&gt; shcnot(2,4,4)
+16×16 Matrix{String}:
+ &quot;1&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;
+ &quot;0&quot;  &quot;1&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;
+ &quot;0&quot;  &quot;0&quot;  &quot;1&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;
+ &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;1&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;
+ &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;1&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;
+ &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;1&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;
+ &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;1&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;
+ &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;1&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;
+ &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;1&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;
+ &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;1&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;
+ &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;1&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;
+ &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;1&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;
+ &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;1&quot;  &quot;0&quot;  &quot;0&quot;
+ &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;1&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;
+ &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;1&quot;
+ &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;1&quot;  &quot;0&quot;</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/07cf48bed3adf28b8a29e1c0f13c960f92143411/src/ToLaTeX.jl#L833-L859">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.shcnot1" href="#Shovel.shcnot1"><code>Shovel.shcnot1</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">shcnot1(crtl::Int, N::Int)::Matrix{String}</code></pre><p>This function returns, in string format, the CNOT matrix for a set of N qubits when the control qubit is at position ctrl (ctrl &lt; (N-1)) and the target qubit is right under it (crtl+1). BEWARE! It is assumed here that the control qubit is over the target.</p><p><strong>Example</strong></p><pre><code class="nohighlight hljs">julia&gt; shcnot1(2, 3)
+8×8 Matrix{String}:
+ &quot;1&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;
+ &quot;0&quot;  &quot;1&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;
+ &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;1&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;
+ &quot;0&quot;  &quot;0&quot;  &quot;1&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;
+ &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;1&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;
+ &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;1&quot;  &quot;0&quot;  &quot;0&quot;
+ &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;1&quot;
+ &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;0&quot;  &quot;1&quot;  &quot;0&quot;</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/07cf48bed3adf28b8a29e1c0f13c960f92143411/src/ToLaTeX.jl#L790-L809">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.shoperator" href="#Shovel.shoperator"><code>Shovel.shoperator</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">shoperator(c::QuantumCircuit)::Matrix{String}</code></pre><p>Returns, in string format, the resulting operator of a quantum circuit.</p><p>This can give a fairly large matrix difficult to read. However each individual element of it can be displayed, as in the example above to see what is happeneing in the operator.</p><p><strong>Example</strong></p><pre><code class="nohighlight hljs">julia&gt; c = QuantumCircuit(qubit_count=3, bit_count=0);
+julia&gt; push_gate!(c, hadamard(1));
+julia&gt; push_gate!(c, rotation_y(1, 1.2));
+julia&gt; push_gate!(c, rotation_x(3, 0.69));
+julia&gt; push_gate!(c, control_x(1,2));
+julia&gt; push_gate!(c, control_x(1,3));
+julia&gt; push_gate!(c, control_x(1,2));
+julia&gt; push_gate!(c, rotation_y(3, 1.99));
+julia&gt; push_gate!(c, control_x(1,2));
+julia&gt; push_gate!(c, control_x(1,3));
+julia&gt; push_gate!(c, rotation_y(3, 1.99));
+julia&gt; push_gate!(c, rotation_x(2, -0.29));
+
+julia&gt; mat = shoperator(c)
+8×8 Matrix{String}:
+ &quot;1/sqrt{2}cos(1.2/2)+1/sqrt{2}-s&quot; ⋯ 226 bytes ⋯ &quot;.99/2)-sin(1.99/2)cos(-0.29/2)&quot;         …  &quot;1/sqrt{2}sin(1.2/2)+1/sqrt{2}co&quot; ⋯ 221 bytes ⋯ &quot;1.99/2)cos(1.99/2)cos(-0.29/2)&quot;
+ &quot;1/sqrt{2}cos(1.2/2)+1/sqrt{2}-s&quot; ⋯ 228 bytes ⋯ &quot;.99/2)-sin(1.99/2)cos(-0.29/2)&quot;          &quot;1/sqrt{2}sin(1.2/2)+1/sqrt{2}co&quot; ⋯ 223 bytes ⋯ &quot;1.99/2)cos(1.99/2)cos(-0.29/2)&quot;
+ &quot;1/sqrt{2}cos(1.2/2)+1/sqrt{2}-s&quot; ⋯ 227 bytes ⋯ &quot;99/2)-sin(1.99/2)sin(-0.29/2)i&quot;           &quot;1/sqrt{2}sin(1.2/2)+1/sqrt{2}co&quot; ⋯ 221 bytes ⋯ &quot;1.99/2)cos(1.99/2)sin(-0.29/2)&quot;
+ &quot;1/sqrt{2}cos(1.2/2)+1/sqrt{2}-s&quot; ⋯ 229 bytes ⋯ &quot;99/2)-sin(1.99/2)sin(-0.29/2)i&quot;         &quot;1/sqrt{2}sin(1.2/2)+1/sqrt{2}co&quot; ⋯ 223 bytes ⋯ &quot;1.99/2)cos(1.99/2)sin(-0.29/2)&quot;
+ &quot;1/sqrt{2}cos(1.2/2)+-1/sqrt{2}-&quot; ⋯ 230 bytes ⋯ &quot;.99/2)-sin(1.99/2)cos(-0.29/2)&quot;        &quot;1/sqrt{2}sin(1.2/2)+-1/sqrt{2}c&quot; ⋯ 225 bytes ⋯ &quot;1.99/2)cos(1.99/2)cos(-0.29/2)&quot;
+ &quot;1/sqrt{2}cos(1.2/2)+-1/sqrt{2}-&quot; ⋯ 232 bytes ⋯ &quot;.99/2)-sin(1.99/2)cos(-0.29/2)&quot;   …  &quot;1/sqrt{2}sin(1.2/2)+-1/sqrt{2}c&quot; ⋯ 227 bytes ⋯ &quot;1.99/2)cos(1.99/2)cos(-0.29/2)&quot;
+ &quot;1/sqrt{2}cos(1.2/2)+-1/sqrt{2}-&quot; ⋯ 231 bytes ⋯ &quot;99/2)-sin(1.99/2)sin(-0.29/2)i&quot;       &quot;1/sqrt{2}sin(1.2/2)+-1/sqrt{2}c&quot; ⋯ 225 bytes ⋯ &quot;1.99/2)cos(1.99/2)sin(-0.29/2)&quot;
+ &quot;1/sqrt{2}cos(1.2/2)+-1/sqrt{2}-&quot; ⋯ 233 bytes ⋯ &quot;99/2)-sin(1.99/2)sin(-0.29/2)i&quot;     &quot;1/sqrt{2}sin(1.2/2)+-1/sqrt{2}c&quot; ⋯ 227 bytes ⋯ &quot;1.99/2)cos(1.99/2)sin(-0.29/2)&quot;
+
+julia&gt; mat[1,1]
+&quot;1/sqrt{2}cos(1.2/2)+1/sqrt{2}-sin(1.2/2)cos(0.69/2)cos(1.99/2)+1/sqrt{2}cos(1.2/2)+1/sqrt{2}-sin(1.2/2)sin(0.69/2)-sin(1.99/2)cos(1.99/2)+1/sqrt{2}cos(1.2/2)+1/sqrt{2}-sin(1.2/2)cos(0.69/2)sin(1.99/2)+1/sqrt{2}cos(1.2/2)+1/sqrt{2}-sin(1.2/2)sin(0.69/2)cos(1.99/2)-sin(1.99/2)cos(-0.29/2)&quot;</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/07cf48bed3adf28b8a29e1c0f13c960f92143411/src/ToLaTeX.jl#L899-L935">source</a></section></article><h2 id="Initprob-utilities"><a class="docs-heading-anchor" href="#Initprob-utilities">Initprob utilities</a><a id="Initprob-utilities-1"></a><a class="docs-heading-anchor-permalink" href="#Initprob-utilities" title="Permalink"></a></h2><p>If a quantum computer is simply viewed as a fancy random number generator, the question is: how can we design a circuit such that the measurements have the disired probability distribution. The library considers the measurements as random variable from a multinomial distribution. This distribution is used to approximate other distribution, discrete or continuous.</p><article class="docstring"><header><a class="docstring-binding" id="Shovel.shinit1qubit!" href="#Shovel.shinit1qubit!"><code>Shovel.shinit1qubit!</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">shinit1qubit!(probability::Float64)::QuantumCircuit</code></pre><p>Will return a 1 qubit QuantumCircuit initialized such that its probability of being equal to 0 is equal to &quot;probability&quot;</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/07cf48bed3adf28b8a29e1c0f13c960f92143411/src/InitProb.jl#L4-L8">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Shovel.shinit2qubits!" href="#Shovel.shinit2qubits!"><code>Shovel.shinit2qubits!</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">shinit2qubits!(probability::Vector{Float64})::QuantumCircuit</code></pre><p>Will return a 2 qubits QuantumCircuit initialize such that the probabilities of the 4 possible outcome are equal to the values provided by the vector &quot;probabilities&quot;</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/RechercheStochastique/shovel/blob/07cf48bed3adf28b8a29e1c0f13c960f92143411/src/InitProb.jl#L22-L26">source</a></section></article></article><nav class="docs-footer"><a class="docs-footer-nextpage" href="Stop/">Estimation for a single qubit »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.23 on <span class="colophon-date" title="Saturday 31 December 2022 10:17">Saturday 31 December 2022</span>. Using Julia version 1.8.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

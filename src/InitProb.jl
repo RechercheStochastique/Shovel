@@ -2,7 +2,7 @@ using Snowflake
 
 export shinit1qubit!
 """
-shinit1qubit!(probability::Float64)::QuantumCircuit
+    shinit1qubit!(probability::Float64)::QuantumCircuit
 
 Will return a 1 qubit QuantumCircuit initialized such that its probability of being equal to 0 is equal to "probability"
 """
@@ -20,7 +20,7 @@ end
 
 export shinit2qubits!
 """
-shinit2qubits!(probability::Vector{Float64})::QuantumCircuit
+    shinit2qubits!(probability::Vector{Float64})::QuantumCircuit
 
 Will return a 2 qubits QuantumCircuit initialize such that the probabilities of the 4 possible outcome are equal to the values provided by the vector "probabilities"
 """

@@ -2,10 +2,26 @@ export Plug
 """
     Plug(c::QuantumCircuit, qb::Int)
 
-Plug is a structure containing the UUID of a circuit and a qubit number. It is the basic element of a Connector.
+# Members
+- `circuit::QuantumCircuit`
+- `qubit::Int` a valid qubit number within the above circuit (1 ≤ qubit ≤ circuit.qubit_count)
+
+Plug is a structure containing the UUID of a Snowflake quantum circuit and a qubit number. It is the building block of a Connector.
 The only validation done is that the qubit number of the circuit is valid (>0 and <=qubit_count).
 
 The comparison operator "==" is defined for plugs and returns true with both plugs connect the same qubits of the same circuits.
+
+# Example
+```
+julia> plg = Plug(c, 1)
+Circuit id: f5335690-885a-11ed-3814-393fb2ae6861   qubit: 1
+
+julia> plg2 = Plug(c,2)
+Circuit id: f5335690-885a-11ed-3814-393fb2ae6861   qubit: 2
+
+julia> plg == plg2
+false
+```
 """
 struct Plug
     circuit::QuantumCircuit
@@ -32,7 +48,28 @@ to which qubit/circuit it is going to.
 Users can either create plugs and then a connector from them or directly create a connector by providing the circuit and the qubit.
 
 The comparison operator "==" is defined for connectors and returns true if they have the same plugs from the same circuits IN THE SAME ORDER. If the two connectors have the same plugs but in REVERSE order, then 
-function "isreverse" should be used to check.
+function [`isinverse`](@ref) should be used to check.
+
+The two other members are used to order them within a [`shMQC`](@ref) and need not be documented at initialization time.
+
+# Members
+- `plugin::Plug` the begining of the connector (circuit & qubit).
+- `plugout::Plug`  the end of the connector (circuit & qubit).
+- `stage::Int` not needed at construction time.
+- `wire::Int` not needed at construction time.
+
+# Example
+In the example above, the connector is crated directly without the use of plugs. However, these will be created in the connector. Members "stage" and "wire" are used only within the shMQC at the final
+construction phase [`shsew`](@ref)
+```
+julia> c1 = QuantumCircuit(qubit_count=4, bit_count=0);
+
+julia> c2 = QuantumCircuit(qubit_count=4, bit_count=0);
+
+julia> con1_1 = Connector(c1, 2, c2, 1)
+Plugin  = Circuit id: 84fbcf80-8880-11ed-354f-3dafa0e9bdc6   qubit: 2
+Plugout = Circuit id: 89614c80-8880-11ed-160b-75d0fd206f1d   qubit: 1
+```
 """
 mutable struct Connector
     plugin::Plug
@@ -62,6 +99,21 @@ export isinverse
 A function to checks if a given connector is the inverse of another one.
 The function is used for internal consistency when a connector is added to an MQC. it will return true if 
 "connec1.plugin == connec2.plugout && connec1.plugin == connec2.plugout" and false otherwise.
+
+# Example
+As can be seen in the example above, the second connector is define as the inverse of the first. Since a [`shMQC`](@ref) cannot contain contradictory path, this function is used to exclude this type of situation.
+```
+julia> con1_1 = Connector(c1, 2, c2, 1)
+Plugin  = Circuit id: 84fbcf80-8880-11ed-354f-3dafa0e9bdc6   qubit: 2
+Plugout = Circuit id: 89614c80-8880-11ed-160b-75d0fd206f1d   qubit: 1
+
+julia> con1_2 = Connector(c2, 1, c1, 2)
+Plugin  = Circuit id: 89614c80-8880-11ed-160b-75d0fd206f1d   qubit: 1
+Plugout = Circuit id: 84fbcf80-8880-11ed-354f-3dafa0e9bdc6   qubit: 2
+
+julia> isinverse(con1_1, con1_2)
+true
+```
 """
 function isinverse(connec1::Connector, connec2::Connector)::Bool
     if connec1.plugin == connec2.plugout && connec1.plugout == connec2.plugin
@@ -73,9 +125,31 @@ end
 
 export isbefore
 """
-    isbefore(connec1::Connector, connec2::Connector)::Bool 
+    isbefore(connec1::Connector, connec2::Connector)::Bool
 
 A function to checks if the output plug of connec1 is the same as the input plug of connec2. If true, it means that connec1 is just before connec2 and they are connected together in the same wire.
+
+# Example
+Three circuits are created and connector con1_1 goes from c1 to c2 while con1_2 goes from c2 to c3. Additionally, the starting qubit of con1_2 is the same as the ending qubit of con1_1. Therefore
+cont1_1 is before con1_2.
+```
+julia> c1 = QuantumCircuit(qubit_count=4, bit_count=0);
+
+julia> c2 = QuantumCircuit(qubit_count=4, bit_count=0);
+
+julia> c3 = QuantumCircuit(qubit_count=4, bit_count=0);
+
+julia> con1_1 = Connector(c1, 2, c2, 1)
+Plugin  = Circuit id: 71b5cfa0-8882-11ed-0999-6ff9e4725693   qubit: 2
+Plugout = Circuit id: 76869190-8882-11ed-12cd-8935492334e6   qubit: 1
+
+julia> con1_2 = Connector(c2, 1, c3, 1)
+Plugin  = Circuit id: 76869190-8882-11ed-12cd-8935492334e6   qubit: 1
+Plugout = Circuit id: 802c0d10-8882-11ed-1449-7b4ca7f5e3a1   qubit: 1
+
+julia> isbefore(con1_1, con1_2)
+true
+```
 """
 function isbefore(connec1::Connector, connec2::Connector)::Bool
     if connec1.plugout == connec2.plugin
@@ -85,8 +159,16 @@ function isbefore(connec1::Connector, connec2::Connector)::Bool
     end
 end
 
+export Wire
 """
-structure Wire is a sequence of connector making a wire in the MQC.
+    Wire
+    
+The structure Wire is used to position [`Connector`](@ref)s into a [`shMQC`](@ref). It is created while sewing the circuits together using [`shsew`](@ref) and not normally used by end users.
+Connectors belonging to the same wire are all connected to each other in a sequential order ( [`isbefore`])(@ref) is therefore true for two subsequent connectors in the connector_list. 
+
+# Members
+- `order::Int` in the shMQC the wires are ordered from top (=1) to buttom.
+- `connector_list::Vector{Connector}` is a list of [`Connector`](@ref)s composing the Wire.
 """
 mutable struct Wire
     order::Int
@@ -95,10 +177,13 @@ mutable struct Wire
     Wire(i::Int) = new(i, Vector{Connector}())
 end
 
+export ismember
 """
     ismember(connec::Connector, wire::Wire)::Bool
+    ismember(plg::Plug, wire::Wire)::Bool
 
-Checks if a given connector is already in a Wire.
+Checks if a given [`Connector`](@ref) or [`Plug`](@ref) is already in a [`Wire`](@ref). Another internal function checking if a connector is part of a given wire in a [`shMQC`](@ref).
+This is an iternal fuction not needed by end users.
 """
 function ismember(connec::Connector, wire::Wire)::Bool
     for con in wire.connector_list
@@ -108,7 +193,7 @@ function ismember(connec::Connector, wire::Wire)::Bool
 end
 
 """
-Does not seem to be used anymore.
+Does not seem to be used anymore. Deprecated?
 """
 function printWire(io::IO, wire::Wire)
     if wire.order == 0
@@ -123,11 +208,6 @@ end
 
 Base.show(io::IO, wire::Wire) = printWire(io, wire)
 
-"""
-    ismember(plg::Plug, wire::Wire)::Bool
-
-Checks if a plug is in a Wire.
-"""
 function ismember(plg::Plug, wire::Wire)::Bool
     for con in wire.connector_list
         if plg == con.plugin || plg == con.plugout 
@@ -137,10 +217,15 @@ function ismember(plg::Plug, wire::Wire)::Bool
     return false
 end
 
+export CircuitPosition
 """
     CircuitPosition
 
-Structure used to document the position of circuits in an shMQC. This is for internal use. Do not export.
+# Members
+- circuit::QuantumCircuit
+- stage::Int
+
+Structure used to document the position of circuits in an [`shMQC`](@ref). This is for internal use.
 """
 mutable struct CircuitPosition
     circuit::QuantumCircuit
@@ -150,24 +235,49 @@ end
 
 export shMQC
 """
-    shMQC
-
 The structure shMQC is the main element of the Meta Quantum Circuit utility.
-After adding quantum circuits (or "circuits" for short) and connector_list, a quantikz/LaTeX file can be produced.
-Most importantly, a new circuit can be generated from the shMQC. 
+After adding Snowflake QuantumCircuits and [`Connector`](@ref)s to it, a quantikz/LaTeX file can be produced and, most importantly, a new circuit can be generated from the shMQC.
+
+The main use of shMQC is to build larger circuits using alreday available circuits by plugin them together.
+
+# Members
+- `circuit_list::Vector{QuantumCircuit}`
+- `connector_list::Vector{Connector}`
+- `wire_list::Vector{Wire}`
+
+The circuit_list and connector_list are self-explanatory. The wire_list is build by the [`shsew`](@ref) function to align all elements together.
 """
 struct shMQC
     circuit_list::Vector{QuantumCircuit}
     connector_list::Vector{Connector}
     wire_list::Vector{Wire}
-    MQC() = new(Vector{QuantumCircuit}(), Vector{Connector}(), Vector{Wire}())
+    shMQC() = new(Vector{QuantumCircuit}(), Vector{Connector}(), Vector{Wire}())
 end
 
 export shprintlightQC
 """
     shprintlightQC(io::IO, circuit::QuantumCircuit)
 
-A quick display of basic info on a QuantumCircuit
+A quick display of basic info on a QuantumCircuit. Sometime there is too much information when displaying QuantumCircuit information.
+
+# Example
+```
+julia> c1
+Quantum Circuit Object:
+   id: 71b5cfa0-8882-11ed-0999-6ff9e4725693
+   qubit_count: 4
+   bit_count: 0
+q[1]:──H────*────X────*───────────────────*────Z──
+            |         |                   |    |
+q[2]:───────X─────────Z──────────────*────|────|──
+                                     |    |    |
+q[3]:──────────────────────H─────────|────Z────|──
+                                     |         |
+q[4]:───────────────────────────H────Z─────────*──
+
+julia> shprintlightQC(stdout, c1)
+circuit id: 71b5cfa0-8882-11ed-0999-6ff9e4725693  qubit_count = 4  pipeline size = 9
+```
 """
 function shprintlightQC(io::IO, circuit::QuantumCircuit)
     println(io, "circuit id: ", circuit.id, "  qubit_count = ", circuit.qubit_count, "  pipeline size = ", length(circuit.pipeline))
@@ -177,12 +287,81 @@ export printshMQC
 """
     printshMQC(io::IO, mqc::shMQC)
 
-Summary print of what's inside a shMQC
+Summary print of what's inside a [`shMQC`](@ref).
+
+# Example
+In the example abva, 5 circuits are added into a [`shMQC`](@ref), using [`shMQCAddCircuit`](@ref), and several connectors, using [`shMQCAddConnector`]@(ref)  defining the piping of the [`shMQC`](@ref).
+```
+julia> mqc = shMQC();
+julia> shMQCAddCircuit(mqc, c1);
+julia> shMQCAddCircuit(mqc, c2);
+julia> shMQCAddCircuit(mqc, c3);
+julia> shMQCAddCircuit(mqc, c4);
+julia> shMQCAddCircuit(mqc, c5);
+julia> shMQCAddConnector(mqc, con1_1);
+julia> shMQCAddConnector(mqc, con1_2);
+julia> shMQCAddConnector(mqc, con1_3);
+julia> shMQCAddConnector(mqc, con2_1);
+julia> shMQCAddConnector(mqc, con2_2);
+julia> shMQCAddConnector(mqc, con2_3);
+julia> shMQCAddConnector(mqc, con3_1);
+julia> shMQCAddConnector(mqc, con3_2);
+julia> shMQCAddConnector(mqc, con3_3);
+julia> shMQCAddConnector(mqc, con4_1);
+julia> shMQCAddConnector(mqc, con4_2);
+julia> shMQCAddConnector(mqc, con4_3);
+
+julia> mqc
+The shMQC is made of these circuits:
+circuit id: 24a8c970-8886-11ed-3438-9f8d7f11f419  qubit_count = 4  pipeline size = 9
+circuit id: 24b68510-8886-11ed-211f-c9940c38b4a6  qubit_count = 4  pipeline size = 9
+circuit id: 24c48ed0-8886-11ed-3ef0-994877b2a905  qubit_count = 4  pipeline size = 9
+circuit id: 24d61b00-8886-11ed-1cc7-173c101871b8  qubit_count = 4  pipeline size = 9
+circuit id: 24def4a0-8886-11ed-15e9-d90899ad2133  qubit_count = 6  pipeline size = 14
+
+And these connector
+Connector 1
+Plugin  = Circuit id: 24a8c970-8886-11ed-3438-9f8d7f11f419   qubit: 2
+Plugout = Circuit id: 24b68510-8886-11ed-211f-c9940c38b4a6   qubit: 1
+Connector 2
+Plugin  = Circuit id: 24a8c970-8886-11ed-3438-9f8d7f11f419   qubit: 3
+Plugout = Circuit id: 24b68510-8886-11ed-211f-c9940c38b4a6   qubit: 2
+Connector 3
+Plugin  = Circuit id: 24a8c970-8886-11ed-3438-9f8d7f11f419   qubit: 4
+Plugout = Circuit id: 24b68510-8886-11ed-211f-c9940c38b4a6   qubit: 3
+Connector 4
+Plugin  = Circuit id: 24b68510-8886-11ed-211f-c9940c38b4a6   qubit: 2
+Plugout = Circuit id: 24c48ed0-8886-11ed-3ef0-994877b2a905   qubit: 1
+Connector 5
+Plugin  = Circuit id: 24b68510-8886-11ed-211f-c9940c38b4a6   qubit: 3
+Plugout = Circuit id: 24c48ed0-8886-11ed-3ef0-994877b2a905   qubit: 2
+Connector 6
+Plugin  = Circuit id: 24b68510-8886-11ed-211f-c9940c38b4a6   qubit: 4
+Plugout = Circuit id: 24c48ed0-8886-11ed-3ef0-994877b2a905   qubit: 3
+Connector 7
+Plugin  = Circuit id: 24c48ed0-8886-11ed-3ef0-994877b2a905   qubit: 2
+Plugout = Circuit id: 24d61b00-8886-11ed-1cc7-173c101871b8   qubit: 1
+Connector 8
+Plugin  = Circuit id: 24c48ed0-8886-11ed-3ef0-994877b2a905   qubit: 3
+Plugout = Circuit id: 24d61b00-8886-11ed-1cc7-173c101871b8   qubit: 2
+Connector 9
+Plugin  = Circuit id: 24c48ed0-8886-11ed-3ef0-994877b2a905   qubit: 4
+Plugout = Circuit id: 24d61b00-8886-11ed-1cc7-173c101871b8   qubit: 3
+Connector 10
+Plugin  = Circuit id: 24d61b00-8886-11ed-1cc7-173c101871b8   qubit: 1
+Plugout = Circuit id: 24def4a0-8886-11ed-15e9-d90899ad2133   qubit: 3
+Connector 11
+Plugin  = Circuit id: 24d61b00-8886-11ed-1cc7-173c101871b8   qubit: 3
+Plugout = Circuit id: 24def4a0-8886-11ed-15e9-d90899ad2133   qubit: 2
+Connector 12
+Plugin  = Circuit id: 24d61b00-8886-11ed-1cc7-173c101871b8   qubit: 4
+Plugout = Circuit id: 24def4a0-8886-11ed-15e9-d90899ad2133   qubit: 5
+```
 """
 function printshMQC(io::IO, mqc::shMQC)
-    println(io, "\nThe MQC is made of these circuits:")
+    println(io, "\nThe shMQC is made of these circuits:")
     for circuit in mqc.circuit_list
-        printlightQC(io, circuit)
+        shprintlightQC(io, circuit)
     end
     println(io, "\nAnd these connector")
     i = 0
@@ -201,9 +380,16 @@ export shMQCAddCircuit
 """
     shMQCAddCircuit(mqc::MQC, newc::QuantumCircuit)::Bool 
 
-This function is used to add a Snowflake QuantumCircuit to an shMQC.
-A given circuit cannot be add twice ot the shMQC. However, two distinct circuits with identical circuitry can as long as their id is different.
-The function will retrun true if the addition was successful.
+This function is used to add a Snowflake QuantumCircuit to a [`shMQC`](@ref).
+A given circuit cannot be add twice ot the [`shMQC`](@ref). However, two distinct circuits with identical circuitry can as long as their id is different.
+The function will retrun true if the addition was successful. The addition is successful is it retrurs true. Otherwise, the circuit is probably already in the [`shMQC`](@ref).
+
+# Example
+```
+julia> mqc = shMQC();
+julia> shMQCAddCircuit(mqc, c1)
+true
+```
 """
 function shMQCAddCircuit(mqc::shMQC, newc::QuantumCircuit)::Bool
     # check if circuit is already there
@@ -222,7 +408,29 @@ export shMQCAddConnector
 """
     shMQCAddConnector(mqc::shMQC, connec::Connector)::Bool 
 
-This function is used to add a connector to an MQC. It has some consistancy checks and will return false if the proposed connector creates inconsistencies such as circular circuitry or duplicate plugs.
+This function is used to add a connector to an MQC. It has several consistancy checks and will return false if the proposed connector creates inconsistencies such as circular circuitry (a list of connector looping back to the initial circuit) or duplicate [`Connector`](@ref)s.
+
+# Example 1
+In this example a connector is to be added but the end part of the connector was not added to the [`shMQC`](@ref). Hece it will fail for not finding it.
+```
+julia> mqc = shMQC();
+julia> shMQCAddCircuit(mqc, c1);
+julia> shMQCAddConnector(mqc, con1_1)
+At least one circuits defined in the plugs of the connector are not in the circuit list of the shMQC. Noting to connect to
+```
+
+# Example 2
+Now the two end are in the shMQC
+```
+julia> mqc = shMQC();
+
+julia> shMQCAddCircuit(mqc, c1);
+
+julia> shMQCAddCircuit(mqc, c2);
+
+julia> shMQCAddConnector(mqc, con1_1)
+true
+```
 """
 function shMQCAddConnector(mqc::shMQC, connec::Connector)::Bool
     # Check if Plug is acceptable.
@@ -248,18 +456,18 @@ function shMQCAddConnector(mqc::shMQC, connec::Connector)::Bool
     end
 
     if infound == false || outfound == false
-        println(stderr, "At least one circuits defined in the plugs of the connector are not in the circuit list of the MQC. Noting to connect to")
+        println(stderr, "At least one circuits defined in the plugs of the connector are not in the circuit list of the [`shMQC`](@ref). Noting to connect to")
         return false
     end
 
     # Now, is there a duplicate
     for connec2 in mqc.connector_list
         if connec.plugin == connec2.plugin
-            println(stderr, "There is already a connector with the same plugin in the MQC")
+            println(stderr, "There is already a connector with the same plugin in the shMQC")
             return false
         end
         if connec.plugout == connec2.plugout
-            println(stderr, "There is already a connector with the same plugout in the MQC")
+            println(stderr, "There is already a connector with the same plugout in the shMQC")
             return false
         end
     end
@@ -321,6 +529,7 @@ function shMQCAddConnector(mqc::shMQC, connec::Connector)::Bool
     end
 
     # OK, no circularity we can add the connector
+    # Are we sure? if the loop does not get back to the exact same qubit, this is still an incoherent circuit.
     push!(mqc.connector_list, connec)
 
     return true
@@ -330,7 +539,7 @@ end
 """
     buildwire!(mqc::shMQC)
 
-Builds the wires of the shMQC. Provided for sake of completeness. Users should not need it in normal circumstances DO NOT export. Returns nothing
+Builds the wires of the [`shMQC`](@ref). Provided for sake of completeness. Users should not need it in normal circumstances DO NOT export. Returns nothing
 The "shsew" function uses it.
 """
 function buildwire!(mqc::shMQC)
@@ -360,7 +569,7 @@ function buildwire!(mqc::shMQC)
         totalqubit = totalqubit + circuit.qubit_count
     end
 
-    # We now create the temporary phi circuit as an origin of the MQC
+    # We now create the temporary phi circuit as an origin of the shMQC
     # and add the pseudo connector originating from phi.
     # These new connector_list are at the begining of the wire
     phi = QuantumCircuit(qubit_count = nbwire, bit_count = 0)
@@ -392,7 +601,7 @@ function buildwire!(mqc::shMQC)
         end
     end
 
-    # We now create the temporary psi circuit as exit circuit of the MQC
+    # We now create the temporary psi circuit as exit circuit of the shMQC
     # and add the pseudo connector ending to psi.
     psi = QuantumCircuit(qubit_count = nbwire, bit_count = 0)
 
@@ -433,7 +642,7 @@ end
 """
     position!(mqc::shMQC)::Vector{CircuitPosition}
 
-Builds the "position" information of the circuits within the shMQC. internal use, DO NOT export.
+Builds the "position" information of the circuits within the [`shMQC`](@ref). internal use, DO NOT export.
 """
 function position!(mqc::shMQC)::Vector{CircuitPosition}
     
@@ -508,7 +717,106 @@ export shsew
 """
     shsew(mqc::shMQC)::QuantumCircuit
 
-This function takes an shMQC and returns a standard Snowflake QuantumCircuit equivalent. This is the main goal of the shMQC concept.
+This function takes an [`shMQC`](@ref) and returns a standard Snowflake QuantumCircuit equivalent. This is the main goal of the [`shMQC`](@ref) concept.
+
+# Example
+A [`shMQC`](@ref) is created with 5 circuits and 12 connectors. The resulting quantum circuit is then created by sewing all pieces together.
+```
+julia> mqc
+
+The shMQC is made of these circuits:
+circuit id: 9c9b32e0-8888-11ed-0a20-f12af1106257  qubit_count = 4  pipeline size = 9
+circuit id: 9ca6cba0-8888-11ed-375f-ef0c51f31fc8  qubit_count = 4  pipeline size = 9
+circuit id: 9cb39ce0-8888-11ed-05d5-bff313ab1874  qubit_count = 4  pipeline size = 9
+circuit id: 9cc3062e-8888-11ed-2d41-45f511d1ab58  qubit_count = 4  pipeline size = 9
+circuit id: 9ccb6aa0-8888-11ed-02ee-d37c6c44d379  qubit_count = 6  pipeline size = 14
+
+And these connector
+Connector 1
+Plugin  = Circuit id: 9c9b32e0-8888-11ed-0a20-f12af1106257   qubit: 2
+Plugout = Circuit id: 9ca6cba0-8888-11ed-375f-ef0c51f31fc8   qubit: 1
+Connector 2
+Plugin  = Circuit id: 9c9b32e0-8888-11ed-0a20-f12af1106257   qubit: 3
+Plugout = Circuit id: 9ca6cba0-8888-11ed-375f-ef0c51f31fc8   qubit: 2
+Connector 3
+Plugin  = Circuit id: 9c9b32e0-8888-11ed-0a20-f12af1106257   qubit: 4
+Plugout = Circuit id: 9ca6cba0-8888-11ed-375f-ef0c51f31fc8   qubit: 3
+Connector 4
+Plugin  = Circuit id: 9ca6cba0-8888-11ed-375f-ef0c51f31fc8   qubit: 2
+Plugout = Circuit id: 9cb39ce0-8888-11ed-05d5-bff313ab1874   qubit: 1
+Connector 5
+Plugin  = Circuit id: 9ca6cba0-8888-11ed-375f-ef0c51f31fc8   qubit: 3
+Plugout = Circuit id: 9cb39ce0-8888-11ed-05d5-bff313ab1874   qubit: 2
+Connector 6
+Plugin  = Circuit id: 9ca6cba0-8888-11ed-375f-ef0c51f31fc8   qubit: 4
+Plugout = Circuit id: 9cb39ce0-8888-11ed-05d5-bff313ab1874   qubit: 3
+Connector 7
+Plugin  = Circuit id: 9cb39ce0-8888-11ed-05d5-bff313ab1874   qubit: 2
+Plugout = Circuit id: 9cc3062e-8888-11ed-2d41-45f511d1ab58   qubit: 1
+Connector 8
+Plugin  = Circuit id: 9cb39ce0-8888-11ed-05d5-bff313ab1874   qubit: 3
+Plugout = Circuit id: 9cc3062e-8888-11ed-2d41-45f511d1ab58   qubit: 2
+Connector 9
+Plugin  = Circuit id: 9cb39ce0-8888-11ed-05d5-bff313ab1874   qubit: 4
+Plugout = Circuit id: 9cc3062e-8888-11ed-2d41-45f511d1ab58   qubit: 3
+Connector 10
+Plugin  = Circuit id: 9cc3062e-8888-11ed-2d41-45f511d1ab58   qubit: 1
+Plugout = Circuit id: 9ccb6aa0-8888-11ed-02ee-d37c6c44d379   qubit: 3
+Connector 11
+Plugin  = Circuit id: 9cc3062e-8888-11ed-2d41-45f511d1ab58   qubit: 3
+Plugout = Circuit id: 9ccb6aa0-8888-11ed-02ee-d37c6c44d379   qubit: 2
+Connector 12
+Plugin  = Circuit id: 9cc3062e-8888-11ed-2d41-45f511d1ab58   qubit: 4
+Plugout = Circuit id: 9ccb6aa0-8888-11ed-02ee-d37c6c44d379   qubit: 5
+
+julia> newcq = shsew(mqc)
+Quantum Circuit Object:
+   id: ac5ded7e-8888-11ed-3316-75f366b5ec40
+   qubit_count: 10
+   bit_count: 0
+Part 1 of 2
+q[1]: ──H────*────X────*───────────────────*────Z─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+             |         |                   |    |
+q[2]: ───────X─────────Z──────────────*────|────|────H────*────X────*───────────────────*────Z────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+                                      |    |    |         |         |                   |    |
+q[3]: ──────────────────────H─────────|────Z────|─────────X─────────Z──────────────*────|────|────H────*────X────*───────────────────*────Z───────────────────────────────────────────────────────────────────
+                                      |         |                                  |    |    |         |         |                   |    |
+q[4]: ───────────────────────────H────Z─────────*────────────────────────H─────────|────Z────|─────────X─────────Z──────────────*────|────|────H────*────X────*───────────────────*────Z──────────────────────
+                                                                                   |         |                                  |    |    |         |         |                   |    |
+q[5]: ────────────────────────────────────────────────────────────────────────H────Z─────────*────────────────────────H─────────|────Z────|─────────X─────────Z──────────────*────|────|──────────────────────
+                                                                                                                                |         |                                  |    |    |
+q[6]: ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────H────Z─────────*────────────────────────H─────────|────Z────|───────────────────X──
+                                                                                                                                                                             |         |                   |  
+q[7]: ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────H────Z─────────*─────────H─────────|──
+                                                                                                                                                                                                           |
+q[8]: ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────H──────────────*──
+
+q[9]: ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+q[10]:────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────H───────
+
+
+Part 2 of 2
+q[1]: ──────────────────────────────────────────────────
+
+q[2]: ──────────────────────────────────────────────────
+
+q[3]: ──────────────────────────────────────────────────
+
+q[4]: ────────────H──────────────Z─────────X────────────
+                                 |         |
+q[5]: ───────────────────────────|─────────|────────────
+                                 |         |
+q[6]: ───────Z──────────────*────|─────────|─────────*──
+             |              |    |         |         |
+q[7]: ───────|──────────────|────|─────────*─────────|──
+             |              |    |                   |
+q[8]: ──X────*──────────────|────*────Z──────────────|──
+                            |         |              |
+q[9]: ─────────────────H────Z─────────*─────────X────|──
+                                                |    |
+q[10]:──────────────────────────────────────────*────X──
+```
 """
 function shsew(mqc::shMQC)::QuantumCircuit
     buildwire!(mqc)
@@ -549,7 +857,7 @@ function shsew(mqc::shMQC)::QuantumCircuit
         # All circuits at stage i are done
     end
 
-    # All circuits in the MQC are done and newpipeline contains all info with proper qubit numbering
+    # All circuits in the shMQC are done and newpipeline contains all info with proper qubit numbering
 
     return newcircuit
 end

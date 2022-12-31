@@ -62,7 +62,7 @@ uuid = "00ebfdb7-1f24-5e51-bd34-a7502290713f"
 version = "3.3.6"
 
 [[deps.Cairo_jll]]
-deps = ["Artifacts", "Bzip2_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "JLLWrappers", "LZO_jll", "Libdl", "Pixman_jll", "Pkg", "Xorg_libXext_jll", "Xorg_libXrender_jll", "Zlib_jll", "libpng_jll"]
+deps = ["Artifacts", "Bzip2_jll", "CompilerSupportLibraries_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "JLLWrappers", "LZO_jll", "Libdl", "Pixman_jll", "Pkg", "Xorg_libXext_jll", "Xorg_libXrender_jll", "Zlib_jll", "libpng_jll"]
 git-tree-sha1 = "4b859a208b2397a7a623a03449e4636bdb17bcf2"
 uuid = "83423d85-b0ee-5818-9007-b63ccbeb887a"
 version = "1.16.1+1"
@@ -868,7 +868,7 @@ version = "1.0.1"
 
 [[deps.Snowflake]]
 deps = ["Coverage", "Interpolations", "JuliaFormatter", "LinearAlgebra", "Parameters", "PlotlyJS", "Plots", "Printf", "ProtoBuf", "Revise", "SparseArrays", "StatsBase", "Test", "UUIDs", "gRPCClient"]
-git-tree-sha1 = "de27937dd1ab0623702fb900d7b0370deda30103"
+git-tree-sha1 = "b8c6fcad03872e90c566ed773d069962e26bafc9"
 repo-rev = "main"
 repo-url = "https://github.com/anyonlabs/Snowflake.jl"
 uuid = "7bd9edc1-4fdc-40a1-a0f6-da58fb4f45eb"

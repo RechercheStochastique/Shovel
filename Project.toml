@@ -1,6 +1,6 @@
 name = "Shovel"
 uuid = "31ac0c1a-a2de-4f35-b73e-55994b12602a"
-authors = ["gagno_000 "]
+authors = ["Denys Gagnon"]
 version = "0.1.0"
 
 [deps]
