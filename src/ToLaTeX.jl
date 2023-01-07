@@ -147,6 +147,26 @@ function shLaTeX(c::QuantumCircuit, FName = "")::Bool
             if length(gate.target) == 1
                 qubit1 = gate.target[1]
                 symbole1 = gate.display_symbol[1]
+				if (gate.instruction_symbol == "r")
+					position = findfirst("θ", symbole1)
+					symbole1 = symbole1[1:position[1]-1] * "\\theta" * symbole1[position[1]+2:end]
+					position = findfirst("ϕ", symbole1)
+					symbole1 = symbole1[1:position[1]-1] * "\\phi" * symbole1[position[1]+2:end]
+				end
+				if (gate.instruction_symbol == "ry") || (gate.instruction_symbol == "rx") || (gate.instruction_symbol == "rz")
+					symbole1 = symbole1[1:1] * "_" * symbole1[2:end] 
+				end
+				if (gate.instruction_symbol == "x_90")
+					symbole1 = "X_{90}" 
+				end
+				if (gate.instruction_symbol == "u")
+					position = findfirst("θ", symbole1)
+					symbole1 = symbole1[1:position[1]-1] * "\\theta" * symbole1[position[1]+2:end]
+					position = findfirst("ϕ", symbole1)
+					symbole1 = symbole1[1:position[1]-1] * "\\phi" * symbole1[position[1]+2:end]
+					position = findfirst("λ", symbole1)
+					symbole1 = symbole1[1:position[1]-1] * "\\lambda" * symbole1[position[1]+2:end]
+				end
                 LatexCircuit[qubit1,j] = string("\\gate{", symbole1, "} & ")
                 for i in 1:c.qubit_count
                     if i != qubit1
@@ -154,31 +174,38 @@ function shLaTeX(c::QuantumCircuit, FName = "")::Bool
                     end
                 end
             else
-                qubit1 = gate.target[1]
-                symbole1 = gate.display_symbol[1]
-                qubit2 = gate.target[2]
-                symbole2 = gate.display_symbol[2]
-
-                if symbole1 == "*"
-                    diff = qubit2 - qubit1
-                    LatexCircuit[qubit1,j] = string("\\ctrl{", diff, "} & ")
-                else
-                    LatexCircuit[qubit1,j] = string("\\gate{", symbole1, "} & ")
-                end
-
-                if symbole2 == "*"
-                    diff = qubit1 - qubit2
-                    LatexCircuit[qubit2,j] = string("\\ctrl{", diff, "} & ")
-                else
-                    LatexCircuit[qubit2,j] = string("\\gate{", symbole2, "} & ")
-                end
-
-                for i in 1:c.qubit_count
-                    if ((i != qubit1) && (i!= qubit2))
-                        LatexCircuit[i,j] = "\\qw & "
-                    end
-                end
-
+				if length(gate.target) == 2
+					qubit1 = gate.target[1]
+					symbole1 = gate.display_symbol[1]
+					qubit2 = gate.target[2]
+					symbole2 = gate.display_symbol[2]
+					diff = qubit2 - qubit1
+					LatexCircuit[qubit1,j] = string("\\ctrl{", diff, "} & ")
+					LatexCircuit[qubit2,j] = string("\\gate{", symbole2, "} & ")
+					for i in 1:c.qubit_count
+					    if ((i != qubit1) && (i!= qubit2))
+					        LatexCircuit[i,j] = "\\qw & "
+					    end
+					end
+				else
+					# then it must be equal to 3 and Toffoli
+					qubit1 = gate.target[1]
+					symbole1 = gate.display_symbol[1]
+					qubit2 = gate.target[2]
+					symbole2 = gate.display_symbol[2]
+					qubit3 = gate.target[3]
+					symbole3 = gate.display_symbol[3]
+					diff1 = qubit3 - qubit1
+					diff2 = qubit3 - qubit2
+					LatexCircuit[qubit1,j] = string("\\ctrl{", diff1, "} & ")
+					LatexCircuit[qubit2,j] = string("\\ctrl{", diff2, "} & ")
+					LatexCircuit[qubit3,j] = string("\\gate{", symbole3, "} & ")
+					for i in 1:c.qubit_count
+					    if ((i != qubit1) && (i!= qubit2) && (i!= qubit3))
+					        LatexCircuit[i,j] = "\\qw & "
+					    end
+					end
+				end
             end
             j = j + 1
         end
@@ -540,7 +567,7 @@ julia> C = shkron(B, A)
  "ic"  "id"  "jc"  "jd"
 ```
 """
-function shkron(mat1::Matrix{String}, mat2::Matrix{String})::Matrix{String}
+function shkron(mat1::Matrix{String}, mat2::Matrix{String})::Matrix{String}  # A REFAIRE COMPLETEMENT!!! DE LA MERDE.
 	mat3 = kron(mat1, mat2)
 	sz = size(mat3)
 	for i in 1:sz[1]
@@ -551,8 +578,12 @@ function shkron(mat1::Matrix{String}, mat2::Matrix{String})::Matrix{String}
 			if (mat3[i,j][begin] == '0') mat3[i,j] = "0" end
 			
 			if (lastindex(mat3[i,j]) > 1)
-				if (mat3[i,j][lastindex(mat3[i,j])] == '1') mat3[i,j] = SubString(mat3[i,j], 1, lastindex(mat3[i,j])-1) end
-				if (mat3[i,j][lastindex(mat3[i,j])] == '0') mat3[i,j] = "0" end
+				if ((mat3[i,j][lastindex(mat3[i,j])] == '1') && (mat3[i,j][lastindex(mat3[i,j])-1] != '-'))
+					mat3[i,j] = SubString(mat3[i,j], 1, lastindex(mat3[i,j])-1)
+				end
+				if (mat3[i,j][lastindex(mat3[i,j])] == '0') 
+					mat3[i,j] = "0" 
+				end
 			end
 		end
 	end
@@ -809,7 +840,8 @@ julia> shcnot1(2, 3)
 """
 function shcnot1(crtl::Int, N::Int)::Matrix{String}
 	if ((crtl < 1) || (crtl >= N))
-		return nothing
+		mat = Matrix{String}(undef, 2^N, 2^N)
+		return(mat)
 	end
 	id = shid()
 	cnot = shcnot()
@@ -859,7 +891,8 @@ julia> shcnot(2,4,4)
 """
 function shcnot(crtl::Int, trgt::Int, N::Int)::Matrix{String}
 	if ((crtl < 1) || trgt < 1) || (crtl > N) || (trgt > N)
-		return
+		mat = Matrix{String}(undef, 2^N, 2^N)
+		return(mat)
 	end
 	if (trgt == crtl + 1)
 		return(shcnot1(crtl, N))
@@ -893,6 +926,323 @@ function shcnot(crtl::Int, trgt::Int, N::Int)::Matrix{String}
 		mat = shkron(mat2, mat1)
 		return(mat)
 	end
+end
+
+export shcnotz
+"""
+	shcnotz()::Matrix{String}
+
+Returns the 4x4 CNOT matrix in string format.
+
+# Example
+```
+julia> Shovel.shcnotz()
+4×4 Matrix{String}:
+ "1"  "0"  "0"  "0"
+ "0"  "1"  "0"  "0"
+ "0"  "0"  "1"  "0"
+ "0"  "0"  "0"  "-1"
+```
+"""
+function shcnotz()::Matrix{String}
+	return( [ "1" "0" "0" "0" ; "0" "1" "0" "0" ; "0" "0" "1" "0" ; "0" "0" "0" "-1" ])
+end
+
+
+export shcnotz1
+"""
+	shcnotz1(crtl::Int, N::Int)::Matrix{String}
+
+This function returns, in string format, the Control z matrix for a set of N qubits when the control qubit is at position ctrl (ctrl < (N-1)) and
+the target qubit is right under it (crtl+1). BEWARE! It is assumed here that the control qubit is over the target.
+
+# Example
+```
+julia> shcnotz1(2,3)
+8×8 Matrix{String}:
+ "1"  "0"  "0"  "0"   "0"  "0"  "0"  "0"
+ "0"  "1"  "0"  "0"   "0"  "0"  "0"  "0"
+ "0"  "0"  "1"  "0"   "0"  "0"  "0"  "0"
+ "0"  "0"  "0"  "-1"  "0"  "0"  "0"  "0"
+ "0"  "0"  "0"  "0"   "1"  "0"  "0"  "0"
+ "0"  "0"  "0"  "0"   "0"  "1"  "0"  "0"
+ "0"  "0"  "0"  "0"   "0"  "0"  "1"  "0"
+ "0"  "0"  "0"  "0"   "0"  "0"  "0"  "-1"
+```
+"""
+function shcnotz1(crtl::Int, N::Int)::Matrix{String}
+	if ((crtl < 1) || (crtl >= N))
+		return nothing
+	end
+	id = shid()
+	cnotz = shcnotz()
+	
+	if (crtl == 1)
+		mat = cnotz
+		for i in 3:N
+			mat = shkron(mat, id)
+		end
+	else
+		mat1 = shid(crtl-1)
+		mat = shkron(mat1, cnotz)
+		if ((N-(crtl+1)) > 0)
+			mat1 = shid(N-(crtl+1))
+			mat = shkron(mat, mat1)
+		end
+	end
+	return(mat)
+end
+
+"""
+	shcnotz(crtl::Int, trgt::Int, N::Int)::Matrix{String}
+
+Returns, in string format, the Control z matrix for a set of N qubits where the control qubit is at position crtl and the target is at position trgt wit (trgt>crtl).
+
+# Example
+```
+julia> shcnotz(2,4,4)
+16×16 Matrix{String}:
+ "1"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"
+ "0"  "1"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"
+ "0"  "0"  "1"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"
+ "0"  "0"  "0"  "1"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"
+ "0"  "0"  "0"  "0"  "0"  "1"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"
+ "0"  "0"  "0"  "0"  "1"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"
+ "0"  "0"  "0"  "0"  "0"  "0"  "0"  "1"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"
+ "0"  "0"  "0"  "0"  "0"  "0"  "1"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"
+ "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "1"  "0"  "0"  "0"  "0"  "0"  "0"  "0"
+ "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "1"  "0"  "0"  "0"  "0"  "0"  "0"
+ "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "1"  "0"  "0"  "0"  "0"  "0"
+ "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "1"  "0"  "0"  "0"  "0"
+ "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "1"  "0"  "0"
+ "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "1"  "0"  "0"  "0"
+ "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "1"
+ "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "0"  "1"  "0"
+```
+"""
+function shcnotz(crtl::Int, trgt::Int, N::Int)::Matrix{String}
+	if ((crtl < 1) || trgt < 1) || (crtl > N) || (trgt > N)
+		return
+	end
+	if (trgt == crtl + 1)
+		return(shcnot1(crtl, N))
+	end
+	
+	mat = shid(N)
+	if (crtl == 1)
+		for i in 1:(trgt-1)
+			mat1 = shcnotz1(i, N)
+			mat = shmult(mat, mat1)
+		end
+		for i in (trgt-2):-1:2
+			mat1 = shcnotz1(i, N)
+			mat = shmult(mat, mat1)
+		end
+		for i in 1:(trgt-1)
+			mat1 = shcnotz1(i, N)
+			mat = shmult(mat, mat1)
+		end
+		for i in (trgt-2):-1:2
+			mat1 = shcnotz1(i, N)
+			mat = shmult(mat, mat1)
+		end
+		return(mat)
+	else
+		mat2 = shid(crtl-1)
+		mat1 = shcnot(1, trgt-crtl+1, N-crtl+1)
+		mat = shkron(mat2, mat1)
+		return(mat)
+	end
+end
+
+export shuniversal
+"""
+	shuniversal(gate::Gate)::Matrix{String}
+
+Will return the universal gate.
+
+# Example
+```
+julia> shuniversal(gate)
+2×2 Matrix{String}:
+ "cos(0.1/2}"          "-ie^{-i0.3}sin(0.1/2)"
+ "e^{i0.2}sin(0.1/2)"  "e^{i(0.2+0.3)}cos(0.1/2}"
+```
+"""
+function shuniversal(gate::Gate)::Matrix{String}
+	mat = Matrix{String}(undef, 2,2)
+	if (gate.instruction_symbol != "u") return(mat) end
+	mat[1,1] = "cos(" * string(gate.parameters[1]) * "/2}"
+	mat[1,2] = "-e^{-i" * string(gate.parameters[3]) * "}sin(" * string(gate.parameters[1]) * "/2)"
+	mat[2,1] = "e^{i" * string(gate.parameters[2]) * "}sin(" * string(gate.parameters[1]) * "/2)"
+	mat[2,2] = "e^{i(" * string(gate.parameters[2]) * "+" * string(gate.parameters[3]) * ")}cos(" * string(gate.parameters[1]) * "/2}"
+	return(mat)
+end
+
+export shphase_shift
+"""
+	shphase_shift(gate::Gate)::Matrix{String}
+
+Will produce the phase shift gate.
+```
+julia> shphase_shift(gate)
+2×2 Matrix{String}:
+ "i"  "0"
+ "0"  "e^{i(0.4)}"
+```
+"""
+function shphase_shift(gate::Gate)::Matrix{String}
+	mat = Matrix{String}(undef, 2,2)
+	if (gate.instruction_symbol != "p") return(mat) end
+	mat[1,1] = "i"
+	mat[1,2] = "0"
+	mat[2,1] = "0"
+	mat[2,2] = "e^{i(" * string(gate.parameters[1])  * ")}"
+	return(mat)
+end
+
+export shx_90
+"""
+	shx_90(gate::Gate)::Matrix{String}
+
+Will return the X_90 gate, a 90° rotation about the X.
+```
+julia> gate = phase_shift(1);
+
+julia> shx_90(gate)
+2×2 Matrix{String}:
+ "1/sqrt{2}"   "-i/sqrt{2}"
+ "-i/sqrt{2}"  "1/sqrt{2}"
+```
+"""
+function shx_90(gate::Gate)::Matrix{String}
+	mat = Matrix{String}(undef, 2,2)
+	if (gate.instruction_symbol != "x_90") return(mat) end
+	mat[1,1] = "1/sqrt{2}"
+	mat[1,2] = "-i/sqrt{2}"
+	mat[2,1] = "-i/sqrt{2}"
+	mat[2,2] = "1/sqrt{2}"
+	return(mat)
+end
+
+export shpi_8
+"""
+	shpi_8(gate::Gate)::Matrix{String}
+
+	Returns the π/8 or T gate.
+```
+julia> gate = pi_8(1);
+
+julia> shpi_8(gate)
+2×2 Matrix{String}:
+ "1"  "0"
+ "0"  "e^{i pi/4}"
+```
+"""
+function shpi_8(gate::Gate)::Matrix{String}
+	mat = Matrix{String}(undef, 2,2)
+	if (gate.instruction_symbol != "t") return(mat) end
+	mat[1,1] = "1"
+	mat[1,2] = "0"
+	mat[2,1] = "0"
+	mat[2,2] = "e^{i pi/4}"
+	return(mat)
+end
+
+export shsigma_x
+"""
+	shsigma_x(gate::Gate)::Matrix{String}
+
+Returns the σ_x gate.
+# Example
+```
+julia> gate = sigma_x(1);
+julia> shsigma_x(gate)
+2×2 Matrix{String}:
+ "0"  "1"
+ "1"  "0"
+```
+"""
+function shsigma_x(gate::Gate)::Matrix{String}
+	mat = Matrix{String}(undef, 2,2)
+	if (gate.instruction_symbol != "x") return(mat) end
+	mat[1,1] = "0"
+	mat[1,2] = "1"
+	mat[2,1] = "1"
+	mat[2,2] = "0"
+	return(mat)
+end
+
+export shsigma_y
+"""
+	shsigma_y(gate::Gate)::Matrix{String}
+
+Returns the σ_y gate.
+# Example
+```
+julia> gate = sigma_y(1);
+julia> shsigma_y(gate)
+2×2 Matrix{String}:
+ "0"  "-i"
+ "i"  "0"
+```
+"""
+function shsigma_y(gate::Gate)::Matrix{String}
+	mat = Matrix{String}(undef, 2,2)
+	if (gate.instruction_symbol != "y") return(mat) end
+	mat[1,1] = "0"
+	mat[1,2] = "-i"
+	mat[2,1] = "i"
+	mat[2,2] = "0"
+	return(mat)
+end
+
+export shsigma_z
+"""
+    shsigma_z(gate::Gate)::Matrix{String}
+
+Returns the σ_z gate.
+# Example
+```
+julia> gate = sigma_z(1);
+julia> shsigma_z(gate)
+2×2 Matrix{String}:
+ "1"  "0"
+ "0"  "-1"
+```
+"""
+function shsigma_z(gate::Gate)::Matrix{String}
+	mat = Matrix{String}(undef, 2,2)
+	if (gate.instruction_symbol != "z") return(mat) end
+	mat[1,1] = "1"
+	mat[1,2] = "0"
+	mat[2,1] = "0"
+	mat[2,2] = "-1"
+	return(mat)
+end
+
+export shphase
+"""
+	shphase(gate::Gate)::Matrix{String}
+```
+julia> gate = phase(1);
+
+julia> shphase(gate)
+2×2 Matrix{String}:
+ "1"  "0"
+ "0"  "i"
+```
+Returns the phase matrix.
+
+"""
+function shphase(gate::Gate)::Matrix{String}
+	mat = Matrix{String}(undef, 2,2)
+	if (gate.instruction_symbol != "s") return(mat) end
+	mat[1,1] = "1"
+	mat[1,2] = "0"
+	mat[2,1] = "0"
+	mat[2,2] = "i"
+	return(mat)
 end
 
 export shoperator
@@ -934,7 +1284,7 @@ julia> mat[1,1]
 ```
 """
 function shoperator(c::QuantumCircuit)::Matrix{String}
-	finalmat = shid(c.qubit_count)#Matrix{String}(undef, 2^c.qubit_count, 2^c.qubit_count)
+	finalmat = shid(c.qubit_count)
 	mat = shid()
 	id = shid()
 	for i in 1:length(c.pipeline)
@@ -1002,9 +1352,27 @@ function shoperator(c::QuantumCircuit)::Matrix{String}
 				end
 			end
 		end
-#		if gate.instruction_symbol == "r" # rotation (theta and phi)
-#			...
-#		end
+		if gate.instruction_symbol == "r" # rotation (theta and phi)
+			if (gate.target[1] == 1)
+				mat = shr(gate)
+				for g in 2:c.qubit_count
+					mat = shkron(mat, id)
+				end
+			else
+				for i in 1:gate.target[1]-1
+					if (i == 1) 
+						mat = id
+					else
+						mat = shkron(mat, id)
+					end
+				end
+				r = shr(gate)
+				mat = shkron(mat, r)
+				for i in gate.target[1]+1:c.qubit_count
+					mat = shkron(mat, id)
+				end
+			end
+		end
 		if (gate.instruction_symbol == "h") # hadamard
 			if (gate.target[1] == 1)
 				mat = shhadamard()
@@ -1043,39 +1411,193 @@ function shoperator(c::QuantumCircuit)::Matrix{String}
 				end
 			end
 		end
+#		if gate.instruction_symbol == "cz" control_z
+#			...
+#		end
 #=
-		if gate.instruction_symbol == "cz" control_z
-			...
-		end
 		if gate.instruction_symbol == "iswap" # iswap
 			...
 		end
-		if gate.instruction_symbol == "x" # sigma_x
-			...
-		end
-		if gate.instruction_symbol == "y" # sigma_y
-			...
-		end
-		if gate.instruction_symbol == "z" # sigma_z
-			...
-		end
-		if gate.instruction_symbol == "s" # phase
-			...
-		end
-		if gate.instruction_symbol == "t" # pi_8
-			...
-		end
-		if gate.instruction_symbol == "i" # eye
+		if gate.instruction_symbol == "ccx" # Toffolini
 			...
 		end
 =#
+		if gate.instruction_symbol == "x_90" # x_90
+			if (gate.target[1] == 1)
+				mat = shx_90(gate)
+				for g in 2:c.qubit_count
+					mat = shkron(mat, id)
+				end
+			else
+				for i in 1:gate.target[1]-1
+					if (i == 1) 
+						mat = id
+					else
+						mat = shkron(mat, id)
+					end
+				end
+				r = shx_90(gate)
+				mat = shkron(mat, r)
+				for i in gate.target[1]+1:c.qubit_count
+					mat = shkron(mat, id)
+				end
+			end
+		end
+		if gate.instruction_symbol == "x" # sigma_x
+			if (gate.target[1] == 1)
+				mat = shsigma_x(gate)
+				for g in 2:c.qubit_count
+					mat = shkron(mat, id)
+				end
+			else
+				for i in 1:gate.target[1]-1
+					if (i == 1) 
+						mat = id
+					else
+						mat = shkron(mat, id)
+					end
+				end
+				r = shsigma_x(gate)
+				mat = shkron(mat, r)
+				for i in gate.target[1]+1:c.qubit_count
+					mat = shkron(mat, id)
+				end
+			end
+		end
+		if gate.instruction_symbol == "y" # sigma_y
+			if (gate.target[1] == 1)
+				mat = shsigma_y(gate)
+				for g in 2:c.qubit_count
+					mat = shkron(mat, id)
+				end
+			else
+				for i in 1:gate.target[1]-1
+					if (i == 1) 
+						mat = id
+					else
+						mat = shkron(mat, id)
+					end
+				end
+				r = shsigma_y(gate)
+				mat = shkron(mat, r)
+				for i in gate.target[1]+1:c.qubit_count
+					mat = shkron(mat, id)
+				end
+			end
+		end
+		if gate.instruction_symbol == "z" # sigma_z
+			if (gate.target[1] == 1)
+				mat = shsigma_z(gate)
+				for g in 2:c.qubit_count
+					mat = shkron(mat, id)
+				end
+			else
+				for i in 1:gate.target[1]-1
+					if (i == 1) 
+						mat = id
+					else
+						mat = shkron(mat, id)
+					end
+				end
+				r = shsigma_z(gate)
+				mat = shkron(mat, r)
+				for i in gate.target[1]+1:c.qubit_count
+					mat = shkron(mat, id)
+				end
+			end
+		end
+		if gate.instruction_symbol == "s" # phase
+			if (gate.target[1] == 1)
+				mat = shphase(gate)
+				for g in 2:c.qubit_count
+					mat = shkron(mat, id)
+				end
+			else
+				for i in 1:gate.target[1]-1
+					if (i == 1) 
+						mat = id
+					else
+						mat = shkron(mat, id)
+					end
+				end
+				r = shphase(gate)
+				mat = shkron(mat, r)
+				for i in gate.target[1]+1:c.qubit_count
+					mat = shkron(mat, id)
+				end
+			end
+		end
+		if gate.instruction_symbol == "t" # pi_8
+			if (gate.target[1] == 1)
+				mat = shpi_8(gate)
+				for g in 2:c.qubit_count
+					mat = shkron(mat, id)
+				end
+			else
+				for i in 1:gate.target[1]-1
+					if (i == 1) 
+						mat = id
+					else
+						mat = shkron(mat, id)
+					end
+				end
+				r = shpi_8(gate)
+				mat = shkron(mat, r)
+				for i in gate.target[1]+1:c.qubit_count
+					mat = shkron(mat, id)
+				end
+			end
+		end
+		if gate.instruction_symbol == "p" # phase shift
+			if (gate.target[1] == 1)
+				mat = shphase_shift(gate)
+				for g in 2:c.qubit_count
+					mat = shkron(mat, id)
+				end
+			else
+				for i in 1:gate.target[1]-1
+					if (i == 1) 
+						mat = id
+					else
+						mat = shkron(mat, id)
+					end
+				end
+				r = shphase_shift(gate)
+				mat = shkron(mat, r)
+				for i in gate.target[1]+1:c.qubit_count
+					mat = shkron(mat, id)
+				end
+			end
+		end
+		if gate.instruction_symbol == "u" # universal
+			if (gate.target[1] == 1)
+				mat = shuniversal(gate)
+				for g in 2:c.qubit_count
+					mat = shkron(mat, id)
+				end
+			else
+				for i in 1:gate.target[1]-1
+					if (i == 1) 
+						mat = id
+					else
+						mat = shkron(mat, id)
+					end
+				end
+				r = shuniversal(gate)
+				mat = shkron(mat, r)
+				for i in gate.target[1]+1:c.qubit_count
+					mat = shkron(mat, id)
+				end
+			end
+		end
 
+#=
 		println("Step ", i, " in the pipeline. The operator for this step is:")
 		display(mat)
 		finalmat = shmult(finalmat, mat)
 		display(finalmat)
 		readline()
-
+=#
 	end
 	return(finalmat)
 end

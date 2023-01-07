@@ -1,4 +1,6 @@
-# Shovel.jl Documentation
+# Shovel Documentation
+
+![So little time, so many snowflakes](assets/neige3.jpg)
 
 The Shovel package contains a set of useful functions for scientists using the Qube computer.
 
@@ -18,7 +20,7 @@ shootuntil
 #shpush_gate!
 ```
 
-## Meta Quantum Circuit (shMQC)
+## Meta Quantum Circuits (shMQC)
 
 The idea of a meta quantum circuit is to help circuit designers to easily reuse already defined circuits. If, for instance, one has a circuit V producing a result that needs to be incerted into a larger circuit. It suffise to define how this circuit is "plugged" with the other elements and let [`shsew`](@ref) build the resulting circuit.
 
@@ -45,6 +47,18 @@ Snowflake aloows to display a circuit on the screen. However, for scientific res
 
 Additionally, it is also possible to display the resulting operator of a circuit into textual forme. The resulting string matrix is often very large and difficult to read but elements of it can be inspected to better understand what is going on. This is usefull only on relatively small circuits and is of educational interest for beginners.
 
+A typical Snowflake circuit such as the above.
+
+![caption does not show](assets/Snowflake_circuit.jpg)
+
+```@raw html
+<br style="line-height: 150%;"/>
+```
+
+Will appear like that once compiled as a Latex/Quantikz file.
+
+![caption does not show](assets/LaTeX_circuit.jpg)
+
 ```@docs
 # Defined in ToLaTeX.jl
 shLaTeX
@@ -65,8 +79,15 @@ shoperator
 
 If a quantum computer is simply viewed as a fancy random number generator, the question is: how can we design a circuit such that the measurements have the disired probability distribution. The library considers the measurements as random variable from a multinomial distribution. This distribution is used to approximate other distribution, discrete or continuous.
 
+!!! info "Just beginning"
+    This part is still at an early stage and will evolve quickly. Once I master the art of properly initializing a set of qubits it will grow faster.
+
+!!! tip "Don't hold your breath"
+    I need spare time to work on this.
+
 ```@docs
 # Defined in Initprob.jl
 shinit1qubit!
 shinit2qubits!
+ZYZdecomposition
 ```

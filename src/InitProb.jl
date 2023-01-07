@@ -1,4 +1,5 @@
 using Snowflake
+using Revise
 
 export shinit1qubit!
 """
@@ -65,4 +66,80 @@ function shinit2qubits!(probabilities::Vector{Float64})::QuantumCircuit
     println("Vecteur de probabilité: ", probabilities)
     println("Carré de la fonction d'onde: ", resultat)
     return(c)
+end
+
+export ZYZdecomposition
+"""
+	ZYZdecomposition(U::Matrix{ComplexF64})::Vector{Float64}
+	ZYZdecomposition(U::Matrix{Float64})::Vector{Float64}
+	
+Returns the ZyZ decomposition of a 2x2 unitary matrix: e^α R_z(β) R_y(γ) R_z(δ). 
+The result is a 4 elements vector where the first is alpha, 
+the second is beta, the third is gamma and the last is delta.
+The second version can be used if U is made of real numbers only.
+
+Returns a vector of #undef if U is not 2x2, or not unitary.
+"""
+function ZYZdecomposition(U::Matrix{ComplexF64})::Vector{Float64}
+	params = Vector{Float64}(undef, 4)
+	sz = size(U)
+	if (sz[1] != 2) || (sz[2] != 2 )
+		return(params)
+	end
+	V = adjoint(U)
+	I = V*U
+    if !(isapprox(I[1,1], Complex(1.0,0.0), rtol=0.001)) || !(isapprox(I[1,2], Complex(0.0,0.0), rtol=0.001)) ||
+            !(isapprox(I[2,1], Complex(0.0,0.0), rtol=0.001)) || !(isapprox(I[2,2], Complex(1.0,0.0), rtol=0.001))
+		return(params)
+	end
+	
+	params[3] = 2.0*atan(abs(U[1,2])/abs(U[1,1]))
+    if isapprox(params[3], 0.0, rtol=0.00001)
+        params[3] = 0.0
+        params[2] = 0.0
+        params[4] = angle(U[2,2]) - angle(U[1,1])
+    else
+	    params[2] = angle(U[2,1]) - angle(U[1,1])
+	    params[4] = angle(U[1,1]) - angle(-U[1,2]) 
+    end
+
+	if (U[1,1] == Complex(0.0,0.0))
+		params[1] = angle(U[2,1]) - (params[2]/2.0) + (params[4]/2.0)
+	else
+		params[1] = angle(U[1,1]) + (params[2]/2.0) + (params[4]/2.0)
+	end
+
+    return(params)
+end
+
+function ZYZdecomposition(U::Matrix{Float64})::Vector{Float64}
+	params = Vector{Float64}(undef, 4)
+	sz = size(U)
+	if (sz[1] != 2) || (sz[2] != 2 )
+		return(params)
+	end
+	V = transpose(U)
+	I = V*U
+	if !(isapprox(I[1,1], Complex(1.0,0.0), rtol=0.001)) || !(isapprox(I[1,2], Complex(0.0,0.0), rtol=0.001)) ||
+            !(isapprox(I[2,1], Complex(0.0,0.0), rtol=0.001)) || !(isapprox(I[2,2], Complex(1.0,0.0), rtol=0.001))
+		return(params)
+	end
+	
+	params[3] = 2.0*atan(abs(U[1,2])/abs(U[1,1]))
+    if isapprox(params[3], 0.0, rtol=0.00001)
+        params[3] = 0.0
+        params[2] = 0.0
+        params[4] = angle(U[2,2]) - angle(U[1,1])
+    else
+	    params[2] = angle(U[2,1]) - angle(U[1,1])
+	    params[4] = angle(U[1,1]) - angle(-U[1,2]) 
+    end
+
+	if (U[1,1] == Complex(0.0,0.0))
+		params[1] = angle(U[2,1]) - (params[2]/2.0) + (params[4]/2.0)
+	else
+		params[1] = angle(U[1,1]) + (params[2]/2.0) + (params[4]/2.0)
+	end
+
+    return(params)
 end

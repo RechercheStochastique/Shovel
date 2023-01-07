@@ -50,13 +50,13 @@ export shootuntil
     
 Runs a circuit until there is a probability 1-γ that the precision Δ is reached for each of the state measurements.
 # Arguments
-- fun::function : is a function you want to calculate on the resulting proportion estimate on the final state of the circuit. For instance "sqrt" to get |α| instead of |α|^2. The function must take a Float64 as and input and return a Float64
-- circuit::QuantumCircuit: a QuantumCircuit as defined by Snowflake
-- Δ::Float64: the difference between the real value and the estimation
-- γ::Float64: the probability that the estimator is more that Δ apart from the true value.
-- linearcoef::Vector{Float64}: a vector of size 2^q, where q is the number of qubit in the circuit (q=circuit.qubit_count). It is a linear combination of the probabilities of the possible bit states after measurement. For more details please see [here](Stop/index.html).
-- verbose::boolean: println usefull information on screen if needed for estimating suitable for Δ and γ. 
-- estimate::boolean : this will prevent the fuction to run past the log(1-γ)/log(1-Δ) limit which is enough to get a rough estimation of the number of shots required to reach the desired precision.
+- `fun::function`: is a function you want to calculate on the resulting proportion estimate on the final state of the circuit. For instance "sqrt" to get |α| instead of |α|^2. The function must take a Float64 as and input and return a Float64
+- `circuit::QuantumCircuit`: a QuantumCircuit as defined by Snowflake
+- `Δ::Float64`: the difference between the real value and the estimation
+- `γ::Float64`: the probability that the estimator is more that Δ apart from the true value.
+- `linearcoef::Vector{Float64}`: a vector of size 2^q, where q is the number of qubit in the circuit (q=circuit.qubit_count). It is a linear combination of the probabilities of the possible bit states after measurement. For more details please see [here](Stop/index.html).
+- `verbose::boolean`: println usefull information on screen if needed for estimating suitable for Δ and γ. 
+- `estimate::boolean`: this will prevent the fuction to run past the log(1-γ)/log(1-Δ) limit which is enough to get a rough estimation of the number of shots required to reach the desired precision.
 
 The second version  is the same but without the function.
 # Example
