@@ -4,19 +4,19 @@
 
 The Shovel package contains a set of useful functions for scientists using the Qube computer.
 
-## Shootuntil method
+## shrun method
 
 The goal of this method is to simplify life of quantum circuit designers. Since a quantum computer is probabilistic, a circuit must be run several time in order to get a good idea of the resulting proportion of each possible measurement outcomes.
 
-So instead of guessing the sutable number of trial, the user of shootuntil is offered to define a confidence interval and a probability of being inside it. The function [`shootuntil`](@ref) will perform sequential shots of the circuit until it reached the desired level of confidence requested by the user.
+So instead of guessing the sutable number of trial, the user of shrun is offered to define a confidence interval and a probability of being inside it. The function [`shrun`](@ref) will perform sequential shots of the circuit until it reached the desired level of confidence requested by the user.
 
 The user has the possibility of defining a linear combinaison of the possible outcomes. If, for instance, the probability of {0,...0} (all zeros) is desired, then the linear combinasion \[1,0,...0\] will be used. If, on the other hand, we seek  the probability that the last qubit is equal to 0, than, all measurements ending with zero is to be estimated. Then, the proper linear combinasion is given by \[0,1,0,1,...0,1\] ("0,1" repeated).
 
 ```@docs
 # Defined in Stop.jl
-shootuntilresult
+shrunresult
 printshootresult
-shootuntil
+shrun
 #shpush_gate!
 ```
 

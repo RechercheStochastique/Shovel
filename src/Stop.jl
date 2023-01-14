@@ -1,6 +1,6 @@
-export shootuntilresult
+export shrunresult
 """
-shootuntilresult is a structure containing the results of [`shootuntil`](@ref) function. It is intended to be reused by another package to perform analysis. 
+shrunresult is a structure containing the results of [`shrun`](@ref) function. It is intended to be reused by another package to perform analysis. 
 # Members
 - `gamma::Float64` the probability that the estimated parameter is farther than Delta from the true value.
 - `Delta::Float64` the disired distance between estimator and true value.
@@ -10,10 +10,10 @@ shootuntilresult is a structure containing the results of [`shootuntil`](@ref) f
 - `funvalue::Float64` the value of the function of the linear combinaison measured.
 - `variancefun::Float64` the variance of the function of the linear combinaison.
 
-After running several shots of a quantum circuit using [`shootuntil`](@ref) the output is summarized into this structure and can be reused for further statistical analysis. Only the final frequency
+After running several shots of a quantum circuit using [`shrun`](@ref) the output is summarized into this structure and can be reused for further statistical analysis. Only the final frequency
 table of the shots are available since this constitute an exhaustive statistics for the results.
 """
-struct shootuntilresult
+struct shrunresult
     gamma::Float64
     Delta::Float64
     circuit::QuantumCircuit
@@ -25,11 +25,11 @@ end
 
 export printshootresult
 """
-    printshootresult(io::IO, shrslt::shootuntilresult)
+    printshootresult(io::IO, shrslt::shrunresult)
 
-Pretty print of the shootuntilresult structure.
+Pretty print of the shrunresult structure.
 """
-function printshootresult(io::IO, shrslt::shootuntilresult)
+function printshootresult(io::IO, shrslt::shrunresult)
     println(io, "γ=", shrslt.gamma)
     println(io, "Δ =", shrslt.Delta)
     print(io, "Circuit: ")
@@ -41,12 +41,12 @@ function printshootresult(io::IO, shrslt::shootuntilresult)
     println(io, "Variance of estimate=", shrslt.variancefun)
 end
 
-Base.show(io::IO, shrslt::shootuntilresult) = printshootresult(io, shrslt)
+Base.show(io::IO, shrslt::shrunresult) = printshootresult(io, shrslt)
 
-export shootuntil
+export shrun
 """
-    shootuntil(fun::Function, circuit::QuantumCircuit, Δ::Float64, γ::Float64, linearcoef::Vector{Float64}, verbose::Bool=false, estimate::Bool=false, ignorefun::Bool=false)::shootuntilresult
-    shootuntil(circuit::QuantumCircuit, Δ::Float64, γ::Float64, linearcoef::Vector{Float64}, verbose=false, estimate=false)::shootuntilresult
+    shrun(fun::Function, circuit::QuantumCircuit, Δ::Float64, γ::Float64, linearcoef::Vector{Float64}, verbose::Bool=false, estimate::Bool=false, ignorefun::Bool=false)::shrunresult
+    shrun(circuit::QuantumCircuit, Δ::Float64, γ::Float64, linearcoef::Vector{Float64}, verbose=false, estimate=false)::shrunresult
     
 Runs a circuit until there is a probability 1-γ that the precision Δ is reached for each of the state measurements.
 # Arguments
@@ -64,7 +64,7 @@ The second version  is the same but without the function.
 julia> c = QuantumCircuit(qubit_count = 3, bit_count=0);
 ... ( a bunch of "push_gate!() to define the circuit c goes here)
 julia> linear_coefficient = [1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0];
-julia> result = Shovel.shootuntil(sqrt, c, 0.001, 0.05, linear_coefficient, true);
+julia> result = Shovel.shrun(sqrt, c, 0.001, 0.05, linear_coefficient, true);
 starting iterative process
 Minimal number of iteration = 52
 Coefficient H(γ,Δ) = 3.8414588206941388e6
@@ -122,7 +122,7 @@ Variance of estimate=0.031047788828476044
 Details of the circuit does not matter but, since it is a 3-qubits circuit, it has 8 possible outcomes for which the relative proportions are given.
 The linear combinaison is such that the proportion of the first qubit being equal to 0 is used and the square root of that proportion is used for the stopping rule.
 """
-function shootuntil(fun::Function, circuit::QuantumCircuit, Δ::Float64, γ::Float64, linearcoef::Vector{Float64}, verbose::Bool=false, estimate::Bool=false, ignorefun::Bool=false)::shootuntilresult
+function shrun(fun::Function, circuit::QuantumCircuit, Δ::Float64, γ::Float64, linearcoef::Vector{Float64}, verbose::Bool=false, estimate::Bool=false, ignorefun::Bool=false)::shrunresult
     NbOfStates = Int(2^circuit.qubit_count)
     absfreq = zeros(Int64, NbOfStates)
     relfreq = zeros(Float64, NbOfStates)
@@ -133,7 +133,7 @@ function shootuntil(fun::Function, circuit::QuantumCircuit, Δ::Float64, γ::Flo
     derivfun = Float64(0.0)
     innerproduct = Float64(0.0)
     σ = Float64(0.0)
-    shootresult = shootuntilresult(γ, Δ, circuit, iterationsdone, relfreq, funvalue, derivfun * derivfun * σ )
+    shootresult = shrunresult(γ, Δ, circuit, iterationsdone, relfreq, funvalue, derivfun * derivfun * σ )
     if verbose == true
         println("starting iterative process")
     end
@@ -194,7 +194,7 @@ function shootuntil(fun::Function, circuit::QuantumCircuit, Δ::Float64, γ::Flo
         if estimate == false
             if iterationsdone >= iterationsmin
                 println("So we can stop")
-                shootresult = shootuntilresult(γ, Δ, circuit, iterationsdone, relfreq, funvalue, derivfun * derivfun * σ )
+                shootresult = shrunresult(γ, Δ, circuit, iterationsdone, relfreq, funvalue, derivfun * derivfun * σ )
                 return shootresult
             else
                 println("We need to continue")
@@ -203,7 +203,7 @@ function shootuntil(fun::Function, circuit::QuantumCircuit, Δ::Float64, γ::Flo
     end
 
     # If estimate is true, then we'll not go further.
-    shootresult = shootuntilresult(γ, Δ, circuit, iterationsdone, relfreq, funvalue, derivfun * derivfun * σ )
+    shootresult = shrunresult(γ, Δ, circuit, iterationsdone, relfreq, funvalue, derivfun * derivfun * σ )
     if estimate == true 
         return shootresult 
     end
@@ -254,19 +254,19 @@ function shootuntil(fun::Function, circuit::QuantumCircuit, Δ::Float64, γ::Flo
     #ψ = Snowflake.simulate(circuit)
     #println(ψ)
 
-    shootresult = shootuntilresult(γ, Δ, circuit, iterationsdone, relfreq, funvalue, derivfun * derivfun * σ )
+    shootresult = shrunresult(γ, Δ, circuit, iterationsdone, relfreq, funvalue, derivfun * derivfun * σ )
     return shootresult
 end
 
-function shootuntil(circuit::QuantumCircuit, Δ::Float64, γ::Float64, linearcoef::Vector{Float64}, verbose=false, estimate=false)::shootuntilresult
-    # The function "x->x" below is bogus bacause the last argument has value "true", so shootuntil will ignore it
-    return shootuntil(x -> x, circuit, Δ, γ, linearcoef, verbose, estimate, true) 
+function shrun(circuit::QuantumCircuit, Δ::Float64, γ::Float64, linearcoef::Vector{Float64}, verbose=false, estimate=false)::shrunresult
+    # The function "x->x" below is bogus bacause the last argument has value "true", so shrun will ignore it
+    return shrun(x -> x, circuit, Δ, γ, linearcoef, verbose, estimate, true) 
 end
 
 """
     shsigmalin(relfreq::Vector{Float64}, linearcoef::Vector{Float64})::Float64
 
-A function to evaluate the variance of a linear function of the possible outcomes. This is used by shshootuntil.
+A function to evaluate the variance of a linear function of the possible outcomes. This is used by shshrun.
 """
 function shsigmalin(relfreq::Vector{Float64}, linearcoef::Vector{Float64})::Float64
     σ = 0.0
