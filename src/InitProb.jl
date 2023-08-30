@@ -70,48 +70,92 @@ end
 
 export ZYZdecomposition
 """
-	ZYZdecomposition(U::Matrix{ComplexF64})::Vector{Float64}
-	ZYZdecomposition(U::Matrix{Float64})::Vector{Float64}
+	ZYZdecomposition(U::Matrix{ComplexF64})
+	ZYZdecomposition(U::Matrix{Float64})
 	
-Returns the ZyZ decomposition of a 2x2 unitary matrix: e^α R_z(β) R_y(γ) R_z(δ). 
+Returns the ZyZ decomposition of a 2x2 unitary matrix: e^α R_z(β) R_y(γ) R_z(δ) => return(; α, β, γ, δ)
 The result is a 4 elements vector where the first is alpha, 
 the second is beta, the third is gamma and the last is delta.
 The second version can be used if U is made of real numbers only.
 
-Returns a vector of #undef if U is not 2x2, or not unitary.
+Returns \alpha=undef, \beta=undef, γ=undef, δ=undef if U is not 2x2, or not unitary.
+
+```
+julia> U = [Complex(1/sqrt(2),0.0) Complex(1/sqrt(2),0.0) ; Complex(1/sqrt(2),0.0) Complex(-1/sqrt(2),0.0) ]
+2×2 Matrix{ComplexF64}:
+ 0.707107+0.0im   0.707107+0.0im
+ 0.707107+0.0im  -0.707107+0.0im
+
+julia> Shovel.ZYZdecomposition(U)
+(α = 1.5707963267948966, β = 0.0, γ = 1.5707963267948966, δ = 3.141592653589793)
+```
+Each value can be retrieved by name:
+```
+julia> (; α, δ, δ) = Shovel.ZYZdecomposition(U)
+(α = 1.5707963267948966, β = 0.0, γ = 1.5707963267948966, δ = 3.141592653589793)
+
+julia> α
+1.5707963267948966
+
+julia> γ
+1.5707963267948966
+
+julia> δ = Shovel.ZYZdecomposition(U).δ
+3.141592653589793
+
+julia> δ
+3.141592653589793
+
+julia> gamma = Shovel.ZYZdecomposition(U)[:γ]
+1.5707963267948966
+
+julia> gamma
+1.5707963267948966
+```
+or by position:
+```
+julia> a, b ,g, d = Shovel.ZYZdecomposition(U)
+(α = 1.5707963267948966, β = 0.0, γ = 1.5707963267948966, δ = 3.141592653589793)
+
+julia> a
+1.5707963267948966
+```
 """
-function ZYZdecomposition(U::AbstractMatrix{<:Complex})::Vector{Float64}
-	params = Vector{Float64}(undef, 4)
+function ZYZdecomposition(U::AbstractMatrix{<:Complex})
 	sz = size(U)
+    α = Float64(undef)
+    β = Float64(undef)
+    γ = Float64(undef)
+    δ = Float64(undef)
 	if (sz[1] != 2) || (sz[2] != 2 )
         println("not a 2x2 matrix")
-		return(params)
+		return(; α, β, γ, δ)
 	end
 	V = adjoint(U)
 	I = V*U
     if !(isapprox(I[1,1], Complex(1.0,0.0), atol=0.000001)) || !(isapprox(I[1,2], Complex(0.0,0.0), atol=0.000001)) ||
             !(isapprox(I[2,1], Complex(0.0,0.0), atol=0.000001)) || !(isapprox(I[2,2], Complex(1.0,0.0), atol=0.000001))
         println("not a unitary matrix")
-		return(params)
+		return(; α, β, γ, δ)
 	end
 	
-	params[3] = 2.0*atan(abs(U[1,2])/abs(U[1,1]))
-    if isapprox(params[3], 0.0, atol=0.000001)
-        params[3] = 0.0
-        params[2] = 0.0
-        params[4] = angle(U[2,2]) - angle(U[1,1])
+	γ = 2.0*atan(abs(U[1,2])/abs(U[1,1]))
+    if isapprox(γ, 0.0, atol=0.000001)
+        γ = 0.0
+        β = 0.0
+        δ = angle(U[2,2]) - angle(U[1,1])
     else
-	    params[2] = angle(U[2,1]) - angle(U[1,1])
-	    params[4] = angle(U[1,1]) - angle(-U[1,2]) 
+	    β = angle(U[2,1]) - angle(U[1,1])
+	    δ = angle(U[1,1]) - angle(-U[1,2]) 
     end
 
 	if (U[1,1] == Complex(0.0,0.0))
-		params[1] = angle(U[2,1]) - (params[2]/2.0) + (params[4]/2.0)
+		α = angle(U[2,1]) - (β/2.0) + (δ/2.0)
 	else
-		params[1] = angle(U[1,1]) + (params[2]/2.0) + (params[4]/2.0)
+		α = angle(U[1,1]) + (β/2.0) + (δ/2.0)
 	end
 
-    return(params)
+    return(; α, β, γ, δ)
 end
 
 export ZYZrecomposition
@@ -120,14 +164,12 @@ export ZYZrecomposition
 
 Will return a 1 qubit QuantumCircuit with gates e^iα R_z(β) R_y(γ) R_z(δ)
 """
-function ZYZrecomposition(params::Vector{Float64})::QuantumCircuit
+function ZYZrecomposition(α::Float64, β::Float64, γ::Float64, δ::Float64)::QuantumCircuit
     c = QuantumCircuit(qubit_count = 1, bit_count = 0)
-    if length(params) != 4
-        return(c)
-    end
-    push_gate!(c, rotation_z(1, params[4]))
-    push_gate!(c, rotation_y(1, params[3]))
-    push_gate!(c, rotation_z(1, params[2]))
+    
+    push_gate!(c, rotation_z(1, δ))
+    push_gate!(c, rotation_y(1, γ))
+    push_gate!(c, rotation_z(1, β))
 
     return(c)
 end
