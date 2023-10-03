@@ -1,4 +1,8 @@
-using Snowflake
+using Snowflurry
+using Distributions
+using Random
+using Bits
+using Plots
 using Revise
 
 export shinit1qubit!
@@ -173,3 +177,51 @@ function ZYZrecomposition(α::Float64, β::Float64, γ::Float64, δ::Float64)::Q
 
     return(c)
 end
+
+export analyse
+function analyse(distri::Distribution, taille::Int)
+    ptaille = 0
+    ntaille = 0
+    pun = zeros(Int,32)
+    nun = zeros(Int,32)
+
+    if (distri isa Distribution{Univariate,Continuous}) == false && distri isa Distribution{Univariate,Discrete} == false
+        return nothing
+    end
+    for i in 1:taille
+        if distri isa Distribution{Univariate,Continuous}
+            x = rand(Float64)
+            z = quantile(distri, x)
+            t = z*2^20
+            s = trunc(Int32, t)
+        else
+            if distri isa Distribution{Univariate,Discrete}
+                x = rand(Int32)
+                z = quantile(distri, x)
+                t = z*2^20
+                s = trunc(Int32, t)
+            end
+        end
+        if bit(s,32) == 0
+            for i in 1:31
+             pun[i] += bit(s,i)
+            end
+            pun[32] += 1
+            ptaille += 1
+        else
+            for i in 1:31
+             nun[i] += bit(s,i)
+            end
+            nun[32] += 1
+            ntaille += 1
+        end
+    end
+    pfreq = zeros(Float64, 32)
+    pfreq = pun ./ptaille
+    nfreq = zeros(Float64, 32)
+    nfreq = nun ./ntaille
+    return (; pfreq, nfreq)
+end
+# markercolors = [:blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, 
+# :blue, :blue, :blue, :blue, :blue, :blue, :red, :red, :red, :red, :red, :red, :red, :red, :green]
+# graphe = plot(pfreq, seriestype=:scatter, label="bits pour nombres positifs", color=markercolors)

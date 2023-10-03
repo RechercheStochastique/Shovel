@@ -1,5 +1,5 @@
 
-using Snowflake
+using Snowflurry
 using UUIDs
 
 export shQuantumCircuit

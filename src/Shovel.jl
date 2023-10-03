@@ -2,7 +2,7 @@
 module Shovel
 
 using Revise
-using Snowflake
+using Snowflurry
 using Distributions
 using Match
 using LinearAlgebra
