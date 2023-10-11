@@ -3,6 +3,8 @@ using Distributions
 using Random
 using Bits
 using Plots
+using DataFrames
+using GLM
 using Revise
 
 export shinit1qubit!
@@ -17,7 +19,7 @@ function shinit1qubit!(probability::Float64)::QuantumCircuit
         return 
     end
 
-    c = QuantumCircuit(qubit_count = 1, bit_count = 0)
+    c = QuantumCircuit(qubit_count = 1)
     theta = 2.0*acos(sqrt(probability))
     push_gate!(c, rotation_y(1, theta))
     return(c)
@@ -178,50 +180,122 @@ function ZYZrecomposition(α::Float64, β::Float64, γ::Float64, δ::Float64)::Q
     return(c)
 end
 
-export analyse
-function analyse(distri::Distribution, taille::Int)
-    ptaille = 0
-    ntaille = 0
-    pun = zeros(Int,32)
-    nun = zeros(Int,32)
+sign(freqbits::Vector{<:Number}) = freqbits[32]
+exp31(freqbits::Vector{<:Number}) = freqbits[31]
+exp30(freqbits::Vector{<:Number}) = freqbits[30]
+exp29(freqbits::Vector{<:Number}) = freqbits[29]
+exp28(freqbits::Vector{<:Number}) = freqbits[28]
+exp27(freqbits::Vector{<:Number}) = freqbits[27]
+exp26(freqbits::Vector{<:Number}) = freqbits[26]
+exp25(freqbits::Vector{<:Number}) = freqbits[25]
+exp24(freqbits::Vector{<:Number}) = freqbits[24]
+frac23(freqbits::Vector{<:Number}) = freqbits[23]
+frac22(freqbits::Vector{<:Number}) = freqbits[22]
+frac21(freqbits::Vector{<:Number}) = freqbits[21]
+frac20(freqbits::Vector{<:Number}) = freqbits[20]
+frac19(freqbits::Vector{<:Number}) = freqbits[19]
+frac18(freqbits::Vector{<:Number}) = freqbits[18]
+frac17(freqbits::Vector{<:Number}) = freqbits[17]
+frac16(freqbits::Vector{<:Number}) = freqbits[16]
+frac15(freqbits::Vector{<:Number}) = freqbits[15]
+frac14(freqbits::Vector{<:Number}) = freqbits[14]
+frac13(freqbits::Vector{<:Number}) = freqbits[13]
+frac12(freqbits::Vector{<:Number}) = freqbits[12]
+frac11(freqbits::Vector{<:Number}) = freqbits[11]
+frac10(freqbits::Vector{<:Number}) = freqbits[10]
+frac9(freqbits::Vector{<:Number}) = freqbits[9]
+frac8(freqbits::Vector{<:Number}) = freqbits[8]
+frac7(freqbits::Vector{<:Number}) = freqbits[7]
+frac6(freqbits::Vector{<:Number}) = freqbits[6]
+frac5(freqbits::Vector{<:Number}) = freqbits[5]
+frac4(freqbits::Vector{<:Number}) = freqbits[4]
+frac3(freqbits::Vector{<:Number}) = freqbits[3]
+frac2(freqbits::Vector{<:Number}) = freqbits[2]
+frac1(freqbits::Vector{<:Number}) = freqbits[1]
 
-    if (distri isa Distribution{Univariate,Continuous}) == false && distri isa Distribution{Univariate,Discrete} == false
-        return nothing
+export bitsDF
+function bitsDF(distri::Distribution, taille::Int, selection::Int...)
+
+    dfbits = DataFrame(sign=Int8[], exp31=Int[], exp30=Int8[], exp29=Int8[], exp28=Int8[], exp27=Int8[], exp26=Int8[], exp25=Int8[], exp24=Int8[],
+        frac23=Int8[], frac22=Int8[], frac21=Int8[], frac20=Int8[], frac19=Int8[], frac18=Int8[], frac17=Int8[], frac16=Int8[], frac15=Int8[],
+        frac14=Int8[], frac13=Int8[], frac12=Int8[], frac11=Int8[], frac10=Int8[], frac9=Int8[], frac8=Int8[], frac7=Int8[], frac6=Int8[],
+        frac5=Int8[], frac4=Int8[], frac3=Int8[], frac2=Int8[], frac1=Int8[],
+        compte=Int32[])
+
+    for sel in selection
+        if sel < 1 || sel > 32
+            error("selected bits must be between 1 and 32 (Julia is base 1)")
+            return df
+        end
     end
+    if (distri isa Distribution{Univariate,Continuous}) == false && distri isa Distribution{Univariate,Discrete} == false
+        error("distri is not Univariate Continuous or Univariate Discrete")
+        return df
+    end
+
+    dico = Dict{UInt32, Int32}()
+    # We put in base 1 nottation  because it is easier to manipulate in Julia.
+    selected = zeros(UInt8, 32)
+    for sel in selection
+        selected[sel] = 1
+    end
+    freqbits = zeros(Int32, 32)
+    x = Float32(0.0)
+    z = Float32(0.0)
+
+    # We first generate a 32 bits random number according to the disired Distribution.
     for i in 1:taille
         if distri isa Distribution{Univariate,Continuous}
-            x = rand(Float64)
+            x = rand(Float32)
+            z = Float32(quantile(distri, x))
+        elseif distri isa Distribution{Univariate,Discrete}
+            x = rand(Int32)
             z = quantile(distri, x)
-            t = z*2^20
-            s = trunc(Int32, t)
-        else
-            if distri isa Distribution{Univariate,Discrete}
-                x = rand(Int32)
-                z = quantile(distri, x)
-                t = z*2^20
-                s = trunc(Int32, t)
-            end
         end
-        if bit(s,32) == 0
-            for i in 1:31
-             pun[i] += bit(s,i)
-            end
-            pun[32] += 1
-            ptaille += 1
+        # Then we take the bit representation of the number.
+        bitti = bits(z)
+
+        # We now codify the 32 bits number into a UInt32 to use in the dictionary below.
+        # The value corresponding to a key in the dictionary is the count of the number
+        # occurence of the key.
+        s = UInt32(0)
+        for i in 1:32
+            s += bitti[i]*selected[i]*2^(i-1)
+            freqbits[i] += bitti[i]
+        end
+        # Now we check if this code is already present in the dictionary.
+        compte = Int32(0)
+        if haskey(dico, s) == false
+            merge!(dico, Dict(s => 1)) # first occurence, count = 1.
         else
-            for i in 1:31
-             nun[i] += bit(s,i)
-            end
-            nun[32] += 1
-            ntaille += 1
+            compte = get(dico, s, 0)
+            merge!(dico, Dict{Int64}{Int64}(s => compte+1)) # not new, count is increased.
         end
     end
-    pfreq = zeros(Float64, 32)
-    pfreq = pun ./ptaille
-    nfreq = zeros(Float64, 32)
-    nfreq = nun ./ntaille
-    return (; pfreq, nfreq)
+    
+
+    for (s, nombre) in pairs(dico)
+        push!(dfbits, (bit(s,32), bit(s, 31), bit(s, 30), bit(s, 29), bit(s, 28), bit(s, 27), bit(s, 26), bit(s, 25), bit(s, 24), bit(s, 23), 
+            bit(s, 22), bit(s, 21), bit(s, 20), bit(s, 19), bit(s, 18), bit(s, 17), bit(s, 16), bit(s, 15), bit(s, 14), 
+            bit(s, 13), bit(s, 12), bit(s, 11), bit(s, 10), bit(s, 9), bit(s, 8), bit(s, 7), bit(s, 6), bit(s, 5), bit(s, 4), 
+            bit(s, 3), bit(s, 2), bit(s, 1), nombre) )
+    end
+
+    return (; dfbits, freqbits)
 end
+
+
+
+# distro = Normal(0.0, 1.0)
+# dfbits, freqbits = bitsDF(distro, 100000, 32,26,25,24,23,22,21,20); <- le signe, les 3 plus petits bits de l'exposant et les 4 plus grand bits de la fraction
+# viewbits = view(dfbits, :, [:compte, :sign, :exp26, :exp25, :exp24, :frac23, :frac22, :frac21, :frac20])
+
+# gm1 = fit(GeneralizedLinearModel, @formula(compte ~ sign + exp26*exp25 + exp25*exp24 + exp24*exp23 + frac22*frac21 + frac21*frac20),
+#   viewbits, Poisson())
+# gm1 = fit(GeneralizedLinearModel, @formula(compte ~ sign + exp26*exp25*exp24 + exp25*exp24*frac23 + exp24*frac23*frac22 + 
+#   frac23*frac22*frac21 + frac22*frac21*frac20), viewbits, Poisson())
+
 # markercolors = [:blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, 
 # :blue, :blue, :blue, :blue, :blue, :blue, :red, :red, :red, :red, :red, :red, :red, :red, :green]
-# graphe = plot(pfreq, seriestype=:scatter, label="bits pour nombres positifs", color=markercolors)
+# rfreqbits = Float64.(freqbits) ./ 10000000.0;
+# graphe = plot(rfreqbits, seriestype=:scatter, label="bits fractionnaires", color=markercolors)
