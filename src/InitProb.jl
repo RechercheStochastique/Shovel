@@ -6,6 +6,9 @@ using Plots
 using DataFrames
 using GLM
 using Revise
+using Plots
+using Printf
+using HypothesisTests
 
 export shinit1qubit!
 """
@@ -284,18 +287,77 @@ function bitsDF(distri::Distribution, taille::Int, selection::Int...)
     return (; dfbits, freqbits)
 end
 
+export graphbits
+function graphbits(distro::Distribution, freqbits::Vector{Int32}, taille::Int)::Plots.Plot{Plots.GRBackend}
+    rfreqbits = Float64.(freqbits) ./ Float64(taille)
+    frac = Vector{Int64}(undef,23)
+    frac .= 1:23
+    vfrac = Vector{Float64}(undef,23)
+    vfrac = rfreqbits[1:23]
+    exp = Vector{Int64}(undef,8)
+    exp .= 24:31
+    vexp = Vector{Float64}(undef,8)
+    vexp .= rfreqbits[24:31]
+    s = [32]
+    vs = Vector{Float64}(undef,1)
+    vs[1] = rfreqbits[32]
+    titre = @sprintf("%s", distro)
+    titreg = titre[1: findfirst("{", titre)[1]-1]
+    titred = titre[findfirst("}",titre)[1]+1:end]
+    titre = titreg*titred
+    graphe = plot(frac, vfrac, seriestype=:scatter, label="bits de fraction", title=titre, 
+        ylims=(-0.02,1.2), color=:green)
+        
+    plot!(graphe, exp, vexp, seriestype=:scatter, label="bits d'exposent", color=:red)
+    plot!(graphe, s, vs, seriestype=:scatter, label="bit de signe", color=:blue)
+    return graphe
+end
 
 
-# distro = Normal(0.0, 1.0)
-# dfbits, freqbits = bitsDF(distro, 100000, 32,26,25,24,23,22,21,20); <- le signe, les 3 plus petits bits de l'exposant et les 4 plus grand bits de la fraction
-# viewbits = view(dfbits, :, [:compte, :sign, :exp26, :exp25, :exp24, :frac23, :frac22, :frac21, :frac20])
+#=
+import Pkg; Pkg.activate(".")
+using Distributions, DataFrames, Plots, GLM, HypothesisTests
+using Shovel
+distro = Normal(0.0, 1.0)
+taille = 1000000
+dfbits, freqbits = bitsDF(distro, taille, 26,25,24,23,22,21); 
+graphe = graphbits(distro, freqbits, taille)
+savefig(graphe, "bits_normal(0.0,1.0).png")
+sort!(dfbits, [:exp26, :exp25, :exp24, :frac23, :frac22, :frac21]);
+viewbits = view(dfbits, :, [:compte, :exp26, :exp25, :exp24, :frac23, :frac22, :frac21]);
+gm1 = fit(GeneralizedLinearModel, @formula(compte ~ exp26*exp25*exp24*frac23*frac22*frac21), viewbits, Poisson())
+#gm1 = fit(GeneralizedLinearModel, @formula(compte ~ sign + exp26*exp25*exp24 + exp25*exp24*frac23 + exp24*frac23*frac22 + 
+  frac23*frac22*frac21 + frac22*frac21*frac20), viewbits, Poisson())
+coeff = gm1.model.pp.beta0 .- gm1.model.pp.delbeta # contient les paramètres
+prediction = predict(gm1); # donne les valeurs prédites. A comparer avec viewbits qu'il faut trier
+prediction = prediction ./ sum(prediction)
+# a partir des valeur prédites on peut construire le tableau de probabilité pour chaque cellule de celui-ci.
+# Ensuite on peut tirer au hasard dans ce tableau en utilisant la probabilité cumulative des cellules.
+# Une fois la cellule sélectionnée on a les bits important de défini et on peut générer les autres bits de manière indépendantes
+# pour construire le nombre à virgule flottante.
 
-# gm1 = fit(GeneralizedLinearModel, @formula(compte ~ sign + exp26*exp25 + exp25*exp24 + exp24*exp23 + frac22*frac21 + frac21*frac20),
-#   viewbits, Poisson())
-# gm1 = fit(GeneralizedLinearModel, @formula(compte ~ sign + exp26*exp25*exp24 + exp25*exp24*frac23 + exp24*frac23*frac22 + 
-#   frac23*frac22*frac21 + frac22*frac21*frac20), viewbits, Poisson())
+end
+PowerDivergenceTest(x[, y]; lambda = 1.0, theta0 = ones(length(x))/length(x)) # test du chi-deux
 
-# markercolors = [:blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, 
-# :blue, :blue, :blue, :blue, :blue, :blue, :red, :red, :red, :red, :red, :red, :red, :red, :green]
-# rfreqbits = Float64.(freqbits) ./ 10000000.0;
-# graphe = plot(rfreqbits, seriestype=:scatter, label="bits fractionnaires", color=markercolors)
+=#
+
+#=
+markercolors = [:blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, 
+ :blue, :blue, :blue, :blue, :blue, :blue, :red, :red, :red, :red, :red, :red, :red, :red, :green];
+rfreqbits = Float64.(freqbits) ./ Float64(sum(freqbits));
+graphe = plot(rfreqbits, seriestype=:scatter, label="bits fractionnaires", color=markercolors)
+frac = Vector{Int64}(undef,23);
+frac .= 1:23;
+vfrac = Vector{Float64}(undef,23);
+vfrac = rfreqbits[1:23];
+exp = Vector{Int64}(undef,8);
+exp .= 24:31;
+vexp = Vector{Float64}(undef,8);
+vexp .= rfreqbits[24:31];
+s = [32];
+vs = Vector{Float64}(undef,1);
+vs[1] = rfreqbits[32];
+graphe = plot(frac, vfrac, seriestype=:scatter, label="fraction", title="Distribution des bits d'une Normale(0,1)", color=:green)
+plot!(exp, vexp, seriestype=:scatter, label="exposent", color=:red)
+plot!(s, vs, seriestype=:scatter, label="signe", color=:blue)
+=#
