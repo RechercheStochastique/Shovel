@@ -313,10 +313,98 @@ function graphbits(distro::Distribution, freqbits::Vector{Int32}, taille::Int)::
     return graphe
 end
 
+export printfreq
+function printfreq(freq::Vector{Float64}, compte::Vector{Int})
+    relfreq = zeros(Float64, size(freq)[1])
+    cumul = zeros(Float64, size(freq)[1])
+    totalfreq = sum(freq)
+    totalcompte = sum(compte)
+    for i in 1:size(freq)[1]
+        println(freq[i], " \t ", compte[i])
+    end
+    println("Compte total = ", totalcompte, "   Total tableau freq = ", totalfreq, "\n\n")
+    for i in 1:size(freq)[1]
+        relfreq[i] = freq[i] / totalfreq
+        if i == 1 cumul[i] = relfreq[i]
+        else cumul[i] = cumul[i-1] + relfreq[i]
+        end
+        println(relfreq[i], " & ", cumul[i], " \\\\")
+    end
+end
+
+export genereducumul
+function genereducumul!(cumul::Vector{float}, probindep::Vector{float}, selection::Int...)
+    # En premier on s'occupe du tableau
+    u = rand(Float32)
+    posit = Int32(1)
+    bittbl = Vector{Bool}(undef, 32)
+    signe = Float32(0.0)
+
+    for i =2:size(cumul)[1]
+        if u > cumul[i-1] posit = i end
+    end
+    nombre = Int32(posit - 1)
+    bitti = bits(nombre)
+    i = 1
+    for sel in selection
+        if bitti[i] == true 
+            bittbl[sel] = true 
+        else 
+            bittbl[sel] = false 
+        end
+        i +=1
+    end
+
+    if probindep[32] != -1 
+        u = rand(Float32)
+        if u < probindep[32]
+            signe = -1.0 
+        else 
+            signe = 1.0 
+        end 
+    else
+        if bittbl[32] == true 
+            signe = -1.0 
+        else signe = 1.0 
+        end 
+    end
+
+    exp = Int32(0)
+    for i in 1:8
+        if probindep[23+i] != -1 
+            u = rand(Float32)
+            if u > probindep[23+i] 
+                exp += 2^(i-1) 
+            end
+        else
+            if bitttbl[23+i] == true 
+                exp += 2^(i-1)
+            end
+        end
+    end
+    exp = exp - Int32(127)
+
+    frac = Float32(1.0)
+    for i in 1:23
+        if probindep[24-i] != -1 
+            u = rand(Float32)
+            if u > probindep[24-i] 
+                frac += 2^(-1)
+            end
+        else
+            if bitttbl[24-i] == true 
+                exp += 2^(-i)
+            end
+        end
+    end
+    valeur = signe * (2.0)^exp * frac
+    return valeur
+end
+
 
 #=
 import Pkg; Pkg.activate(".")
-using Distributions, DataFrames, Plots, GLM, HypothesisTests
+using Distributions, DataFrames, Plots, GLM, HypothesisTests, Bits
 using Shovel
 distro = Normal(0.0, 1.0)
 taille = 1000000
@@ -325,11 +413,14 @@ graphe = graphbits(distro, freqbits, taille)
 savefig(graphe, "bits_normal(0.0,1.0).png")
 sort!(dfbits, [:exp26, :exp25, :exp24, :frac23, :frac22, :frac21]);
 viewbits = view(dfbits, :, [:compte, :exp26, :exp25, :exp24, :frac23, :frac22, :frac21]);
+compte = Vector{Int}(undef, size(viewbits)[1]);
+for i in 1:16 compte[i] = viewbits.compte[i] end
 gm1 = fit(GeneralizedLinearModel, @formula(compte ~ exp26*exp25*exp24*frac23*frac22*frac21), viewbits, Poisson())
 #gm1 = fit(GeneralizedLinearModel, @formula(compte ~ sign + exp26*exp25*exp24 + exp25*exp24*frac23 + exp24*frac23*frac22 + 
   frac23*frac22*frac21 + frac22*frac21*frac20), viewbits, Poisson())
 coeff = gm1.model.pp.beta0 .- gm1.model.pp.delbeta # contient les paramètres
 prediction = predict(gm1); # donne les valeurs prédites. A comparer avec viewbits qu'il faut trier
+
 prediction = prediction ./ sum(prediction)
 # a partir des valeur prédites on peut construire le tableau de probabilité pour chaque cellule de celui-ci.
 # Ensuite on peut tirer au hasard dans ce tableau en utilisant la probabilité cumulative des cellules.
