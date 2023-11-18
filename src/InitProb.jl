@@ -183,6 +183,7 @@ function ZYZrecomposition(α::Float64, β::Float64, γ::Float64, δ::Float64)::Q
     return(c)
 end
 
+#=
 sign(freqbits::Vector{<:Number}) = freqbits[32]
 exp31(freqbits::Vector{<:Number}) = freqbits[31]
 exp30(freqbits::Vector{<:Number}) = freqbits[30]
@@ -215,14 +216,15 @@ frac4(freqbits::Vector{<:Number}) = freqbits[4]
 frac3(freqbits::Vector{<:Number}) = freqbits[3]
 frac2(freqbits::Vector{<:Number}) = freqbits[2]
 frac1(freqbits::Vector{<:Number}) = freqbits[1]
+=#
 
 export bitsDF
 function bitsDF(distri::Distribution, taille::Int, selection::Int...)
 
-    dfbits = DataFrame(sign=Int8[], exp31=Int[], exp30=Int8[], exp29=Int8[], exp28=Int8[], exp27=Int8[], exp26=Int8[], exp25=Int8[], exp24=Int8[],
-        frac23=Int8[], frac22=Int8[], frac21=Int8[], frac20=Int8[], frac19=Int8[], frac18=Int8[], frac17=Int8[], frac16=Int8[], frac15=Int8[],
-        frac14=Int8[], frac13=Int8[], frac12=Int8[], frac11=Int8[], frac10=Int8[], frac9=Int8[], frac8=Int8[], frac7=Int8[], frac6=Int8[],
-        frac5=Int8[], frac4=Int8[], frac3=Int8[], frac2=Int8[], frac1=Int8[],
+    dfbits = DataFrame(b32=Int8[], b31=Int[], b30=Int8[], b29=Int8[], b28=Int8[], b27=Int8[], b26=Int8[], b25=Int8[], b24=Int8[],
+        b23=Int8[], b22=Int8[], b21=Int8[], b20=Int8[], b19=Int8[], b18=Int8[], b17=Int8[], b16=Int8[], b15=Int8[],
+        b14=Int8[], b13=Int8[], b12=Int8[], b11=Int8[], b10=Int8[], b9=Int8[], b8=Int8[], b7=Int8[], b6=Int8[],
+        b5=Int8[], b4=Int8[], b3=Int8[], b2=Int8[], b1=Int8[],
         compte=Int32[])
 
     for sel in selection
@@ -332,123 +334,203 @@ function printfreq(freq::Vector{Float64}, compte::Vector{Int})
     end
 end
 
-export genereducumul
-function genereducumul!(cumul::Vector{float}, probindep::Vector{float}, selection::Int...)
-    # En premier on s'occupe du tableau
-    u = rand(Float32)
-    posit = Int32(1)
-    bittbl = Vector{Bool}(undef, 32)
-    signe = Float32(0.0)
-
-    for i =2:size(cumul)[1]
-        if u > cumul[i-1] posit = i end
-    end
-    nombre = Int32(posit - 1)
-    bitti = bits(nombre)
-    i = 1
-    for sel in selection
-        if bitti[i] == true 
-            bittbl[sel] = true 
-        else 
-            bittbl[sel] = false 
-        end
-        i +=1
-    end
-
-    if probindep[32] != -1 
-        u = rand(Float32)
-        if u < probindep[32]
-            signe = -1.0 
-        else 
-            signe = 1.0 
-        end 
-    else
-        if bittbl[32] == true 
-            signe = -1.0 
-        else signe = 1.0 
-        end 
-    end
-
-    exp = Int32(0)
-    for i in 1:8
-        if probindep[23+i] != -1 
-            u = rand(Float32)
-            if u > probindep[23+i] 
-                exp += 2^(i-1) 
-            end
-        else
-            if bitttbl[23+i] == true 
-                exp += 2^(i-1)
-            end
-        end
-    end
-    exp = exp - Int32(127)
-
-    frac = Float32(1.0)
-    for i in 1:23
-        if probindep[24-i] != -1 
-            u = rand(Float32)
-            if u > probindep[24-i] 
-                frac += 2^(-1)
-            end
-        else
-            if bitttbl[24-i] == true 
-                exp += 2^(-i)
-            end
-        end
-    end
-    valeur = signe * (2.0)^exp * frac
-    return valeur
+export validatemodel
+function validatemodel(prediction::Vector{float}, compte::Vector{Int})
+    return(PowerDivergenceTest(compte, lambda=1.0, theta0=prediction))
 end
 
+export generetableau
+function generetableau(prediction::Vector{Float64}, taille::Int)::Vector{Float64}
+    freq = zeros(Int64, size(prediction)[1])
+    freqrel = zeros(Float64, size(prediction)[1])
+    cumul = zeros(Float64, size(prediction)[1])
+    cumul[1] = prediction[1]
+    for i in 2:size(prediction)[1]
+        cumul[i] = cumul[i-1] + prediction[i]
+    end
+
+    for i in 1:taille
+        u = rand(Float32)
+        for i = 1:(size(cumul)[1])
+            if u < cumul[i] 
+                freq[i]+=1
+                break
+            end
+        end
+    end
+
+    freqrel = freq ./ sum(freq)
+
+    return freqrel
+end
+
+export prediction2cumul
+function prediction2cumul(prediction::Vector{Float64})::Vector{Float64}
+    cumul = zeros(Float64, size(prediction)[1])
+    cumul[1] = prediction[1]
+    for i in 2:size(prediction)[1]
+        cumul[i] = cumul[i-1] + prediction[i]
+    end
+    return cumul
+end
+
+export genereducumul
+function genereducumul(freqrelbits::Vector{Float64}, cumul::Vector{Float64}, taille::Int, verbose=false, selection::Int...)::Vector{Float32}
+    # En premier on s'occupe du tableau
+    simulation = zeros(Float32, taille)
+    for t in 1:taille
+        u = rand(Float32)
+        posit = Int32(1)
+        bittbl = Vector{Bool}(undef, 32)
+
+        posit = 1
+        for i in 1:size(cumul)[1]
+            if u > cumul[i] 
+                posit = i
+            else
+                break
+            end
+        end
+        nombre = Int32(posit - 1)
+        bitti = bits(nombre) # <- ça ne met pas les bit à la bonne place. Mais bittbl sera bon.
+        i = 1
+        for sel in selection
+            if bitti[i] == true 
+                bittbl[sel] = true 
+            else 
+                bittbl[sel] = false 
+            end
+            i +=1
+        end
+
+        signe = Float32(1.0)
+        if freqrelbits[32] != -1.0
+            u = rand(Float32)
+            if u < freqrelbits[32]
+                signe = -1.0 
+            end 
+        else
+            if bittbl[32] == true 
+                signe = -1.0
+            end 
+        end
+
+        exp = Int32(0)
+        for i in 1:7 # ATTENTION on a retiré le bit 31 car on avait des "Inf" comme output
+            if freqrelbits[23+i] != -1.0
+                u = rand(Float32)
+                if u < freqrelbits[23+i] 
+                    exp += 2^(i-1) 
+                end
+            else
+                if bittbl[23+i] == true 
+                    exp += 2^(i-1)
+                end
+            end
+        end
+        exp = exp - Int32(127)
+
+        frac = Float32(1.0)
+        for i in 1:23
+            if freqrelbits[24-i] != -1.0
+                u = rand(Float32)
+                if u < freqrelbits[24-i] 
+                    frac += 2.0^(-i)
+                end
+            else
+                if bittbl[24-i] == true 
+                    frac += 2.0^(-i)
+                end
+            end
+        end
+
+        expo = Float32(2.0^exp)
+        valeur = Float32(signe * expo * frac)
+        simulation[t] = valeur
+
+        if verbose == true
+            @show u
+            @show nombre
+            @show posit
+            @show bitti
+            @show bittbl
+            @show signe
+            @show exp
+            @show frac
+            @show valeur
+        end
+    end
+    return simulation
+end
 
 #=
 import Pkg; Pkg.activate(".")
 using Distributions, DataFrames, Plots, GLM, HypothesisTests, Bits
 using Shovel
-distro = Normal(0.0, 1.0)
-taille = 1000000
-dfbits, freqbits = bitsDF(distro, taille, 26,25,24,23,22,21); 
+distro = Normal(0.0, 1.0);
+taille = 1000000;
+#
+# Option 1
+#
+dfbits, freqbits = bitsDF(distro, taille, 26,25,24,23,22,21,20); 
 graphe = graphbits(distro, freqbits, taille)
 savefig(graphe, "bits_normal(0.0,1.0).png")
-sort!(dfbits, [:exp26, :exp25, :exp24, :frac23, :frac22, :frac21]);
-viewbits = view(dfbits, :, [:compte, :exp26, :exp25, :exp24, :frac23, :frac22, :frac21]);
+#
+# frequences relatives pour chaque bit
+#
+freqrelbits = Vector{float}(undef, size(freqbits)[1])
+for i = 1:size(freqrelbits)[1] freqrelbits[i] = freqbits[i] / sum(freqbits) end
+freqrelbits[26] = -1.0
+freqrelbits[25] = -1.0
+freqrelbits[24] = -1.0
+freqrelbits[23] = -1.0
+freqrelbits[22] = -1.0
+freqrelbits[21] = -1.0
+freqrelbits[20] = -1.0
+
+sort!(dfbits, [:b26, :b25, :b24, :b23, :b22, :b21, :b20]);
+viewbits = view(dfbits, :, [:compte, :b26, :b25, :b24, :b23, :b22, :b21, :b20]);
 compte = Vector{Int}(undef, size(viewbits)[1]);
-for i in 1:16 compte[i] = viewbits.compte[i] end
-gm1 = fit(GeneralizedLinearModel, @formula(compte ~ exp26*exp25*exp24*frac23*frac22*frac21), viewbits, Poisson())
-#gm1 = fit(GeneralizedLinearModel, @formula(compte ~ sign + exp26*exp25*exp24 + exp25*exp24*frac23 + exp24*frac23*frac22 + 
-  frac23*frac22*frac21 + frac22*frac21*frac20), viewbits, Poisson())
-coeff = gm1.model.pp.beta0 .- gm1.model.pp.delbeta # contient les paramètres
+for i in 1:size(viewbits)[1] compte[i] = viewbits.compte[i] end
+# Modèle saturé
+#gm1 = fit(GeneralizedLinearModel, @formula(compte ~ b26*b25*b24*b23*b22*b21*b20), viewbits, Poisson())
+# modèle simplifié
+gm1 = fit(GeneralizedLinearModel, @formula(compte ~ 1+ b26*b25*b24*b23 + b26*b25*b24*b22 + b26*b25*b24*b21 + b26*b25*b24*b20), viewbits, Poisson())
+#coeff = gm1.model.pp.beta0 .- gm1.model.pp.delbeta # contient les paramètres
 prediction = predict(gm1); # donne les valeurs prédites. A comparer avec viewbits qu'il faut trier
+prediction = prediction ./ sum(prediction);
+PowerDivergenceTest(compte, lambda=1.0, theta0=prediction) # test du chi-deux
+compterel = compte ./ sum(compte);
+plot(prediction, seriestype=:sticks, label="modèle", title="fréquences observées versus fréquences du modèle")
+plot!(compterel, seriestype=:line, label="fréquences observées")
+#
+# Option 2
+#
+dfbits, freqbits = bitsDF(distro, taille, 26,25,24,23,22,21);
+graphe = graphbits(distro, freqbits, taille)
+savefig(graphe, "bits_normal(0.0,1.0).png")
+freqrelbits = Vector{Float64}(undef, size(freqbits)[1]);
+for i = 1:size(freqrelbits)[1] freqrelbits[i] = freqbits[i] / taille end
+freqrelbits[26] = -1.0
+freqrelbits[25] = -1.0
+freqrelbits[24] = -1.0
+freqrelbits[23] = -1.0
+freqrelbits[22] = -1.0
+freqrelbits[21] = -1.0
 
-prediction = prediction ./ sum(prediction)
-# a partir des valeur prédites on peut construire le tableau de probabilité pour chaque cellule de celui-ci.
-# Ensuite on peut tirer au hasard dans ce tableau en utilisant la probabilité cumulative des cellules.
-# Une fois la cellule sélectionnée on a les bits important de défini et on peut générer les autres bits de manière indépendantes
-# pour construire le nombre à virgule flottante.
-
-end
-PowerDivergenceTest(x[, y]; lambda = 1.0, theta0 = ones(length(x))/length(x)) # test du chi-deux
-
-=#
-
-#=
-markercolors = [:blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, :blue, 
- :blue, :blue, :blue, :blue, :blue, :blue, :red, :red, :red, :red, :red, :red, :red, :red, :green];
-rfreqbits = Float64.(freqbits) ./ Float64(sum(freqbits));
-graphe = plot(rfreqbits, seriestype=:scatter, label="bits fractionnaires", color=markercolors)
-frac = Vector{Int64}(undef,23);
-frac .= 1:23;
-vfrac = Vector{Float64}(undef,23);
-vfrac = rfreqbits[1:23];
-exp = Vector{Int64}(undef,8);
-exp .= 24:31;
-vexp = Vector{Float64}(undef,8);
-vexp .= rfreqbits[24:31];
-s = [32];
-vs = Vector{Float64}(undef,1);
-vs[1] = rfreqbits[32];
-graphe = plot(frac, vfrac, seriestype=:scatter, label="fraction", title="Distribution des bits d'une Normale(0,1)", color=:green)
-plot!(exp, vexp, seriestype=:scatter, label="exposent", color=:red)
-plot!(s, vs, seriestype=:scatter, label="signe", color=:blue)
+sort!(dfbits, [:b26, :b25, :b24, :b23, :b22, :b21]);
+viewbits = view(dfbits, :, [:compte, :b26, :b25, :b24, :b23, :b22, :b21]);
+compte = Vector{Int}(undef, size(viewbits)[1]);
+for i in 1:size(viewbits)[1] compte[i] = viewbits.compte[i] end
+# Modèle saturé
+#gm1 = fit(GeneralizedLinearModel, @formula(compte ~ b26*b25*b24*b23*b22*b21), viewbits, Poisson())
+# modèle simplifié
+gm1 = fit(GeneralizedLinearModel, @formula(compte ~ 1+ b26*b25*b24*b23 + b26*b25*b24*b22 + b26*b25*b24*b21), viewbits, Poisson())
+prediction = predict(gm1);
+prediction = prediction ./ sum(prediction);
+PowerDivergenceTest(compte, lambda=1.0, theta0=prediction)
+compterel = compte ./ sum(compte);
+plot(compterel, seriestype=:sticks, label="observé")
+plot!(prediction, seriestype=:line, label="modèle")
+savefig("modèle simplifié.png")
 =#

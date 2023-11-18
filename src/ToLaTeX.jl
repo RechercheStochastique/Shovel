@@ -1,6 +1,7 @@
 
 using Snowflurry
 using UUIDs
+using StatsModels
 
 export shQuantumCircuit
 """
@@ -227,13 +228,73 @@ function shLaTeX(c::QuantumCircuit, FName = "")::Bool
     
     if FName != ""
         println(f, "\\end{document}\n")
-    end
-
-    if FName != ""
         close(f)
     end
 
     return true
+end
+
+export GLMLaTex
+function GLMLaTex(FName::String, gm1::StatsModels.TableRegressionModel)
+
+	if FName != ""
+        f = open(FName, "w+")
+        println(f, "\\documentclass{article}")
+        println(f, "\\begin{document}\n")
+		println(f, "\\begin{table}[h!]")
+		println(f, "\\centering")
+		println(f, "\\begin{tabular}{lllll}")
+    else
+        f = stdout
+    end
+
+	tampon = Base.BufferStream()
+	show(tampon, gm1)
+	closewrite(tampon)
+	keep = false
+	skip = 0
+	for line in eachline(tampon)
+		if skip == 0
+			if line == "Coefficients:" 
+				write(f, "Coefficients:&&&&\\\\\n")
+				write(f, "\\hline\n")
+				write(f, "&Coef. & Std. Error & \$z\$ & Pr(\$>|z|\$) \\\\\n")
+				write(f, "\\hline\n")
+				skip = 3
+				keep = true
+			end
+			if (keep == true) && (skip == 0)
+				if SubString(line, 1, 4) != "──"
+					line = replace(line, r" & " => s"\\&")
+					long = length(line) + 1
+					while length(line) < long
+						long = length(line)
+						line = replace(line, r"  " => s" ")
+					end
+					fifth = findnext(" ", line, findnext(" ", line, findnext(" ", line, findnext(" ", line, findfirst(" ", line)[1]+1)[1]+1)[1]+1)[1]+1)
+					line = SubString(line, 1, fifth[1]-1) * "\\\\"
+					line = replace(line, r" " => s" & ")
+					line = replace(line, r"<" => s"$<$")
+					write(f, line)
+					write(f, "\n")
+				else
+					write(f, "\\hline\n")
+				end
+			end
+		else
+			skip -= 1
+		end
+	end
+
+    if FName != ""
+		println(f, "\\end{tabular}")
+		println(f, "\\caption{Output from GLM.}")
+		println(f, "\\label{table}")
+		println(f, "\\end{table}")
+        println(f, "\\end{document}")
+        close(f)
+    end
+
 end
 
 """

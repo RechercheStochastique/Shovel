@@ -1,0 +1,240 @@
+julia> gm1 = fit(GeneralizedLinearModel, @formula(compte ~ exp26*exp25*exp24*frac23*frac22*frac21*frac20), 
+	viewbits, Poisson())
+StatsModels.TableRegressionModel{GeneralizedLinearModel{GLM.GlmResp{Vector{Float64}, Poisson{Float64}, LogLink}, 
+	GLM.DensePredChol{Float64, LinearAlgebra.CholeskyPivoted{Float64, Matrix{Float64}, Vector{Int64}}}}, 
+	Matrix{Float64}}
+
+compte ~ 1 + exp26 + exp25 + exp24 + frac23 + frac22 + frac21 + frac20 + exp26 \& exp25 + exp26 \& exp24 + \\
+	exp25 \& exp24 + exp26 \& frac23 + exp25 \& frac23 + exp24 \& frac23 + exp26 \& frac22 + exp25 \& frac22 + \\
+	exp24 \& frac22 + frac23 \& frac22 + exp26 \& frac21 + exp25 \& frac21 + exp24 \& frac21 + frac23 \& frac21 + \\
+	frac22 \& frac21 + exp26 \& frac20 + exp25 \& frac20 + exp24 \& frac20 + frac23 \& frac20 + frac22 \& frac20 + \\
+	frac21 \& frac20 + exp26 \& exp25 \& exp24 + exp26 \& exp25 \& frac23 + exp26 \& exp24 \& frac23 + \\
+	exp25 \& exp24 \& frac23 + exp26 \& exp25 \& frac22 + exp26 \& exp24 \& frac22 + exp25 \& exp24 \& frac22 + \\
+	exp26 \& frac23 \& frac22 + exp25 \& frac23 \& frac22 + exp24 \& frac23 \& frac22 + exp26 \& exp25 \& frac21 + \\
+	exp26 \& exp24 \& frac21 + exp25 \& exp24 \& frac21 + exp26 \& frac23 \& frac21 + exp25 \& frac23 \& frac21 + \\
+	exp24 \& frac23 \& frac21 + exp26 \& frac22 \& frac21 + exp25 \& frac22 \& frac21 + exp24 \& frac22 \& frac21 + \\
+	frac23 \& frac22 \& frac21 + exp26 \& exp25 \& frac20 + exp26 \& exp24 \& frac20 + exp25 \& exp24 \& frac20 + \\
+	exp26 \& frac23 \& frac20 + exp25 \& frac23 \& frac20 + exp24 \& frac23 \& frac20 + exp26 \& frac22 \& frac20 + \\
+	exp25 \& frac22 \& frac20 + exp24 \& frac22 \& frac20 + frac23 \& frac22 \& frac20 + exp26 \& frac21 \& frac20 + \\
+	exp25 \& frac21 \& frac20 + exp24 \& frac21 \& frac20 + frac23 \& frac21 \& frac20 + frac22 \& frac21 \& frac20 + \\
+	exp26 \& exp25 \& exp24 \& frac23 + exp26 \& exp25 \& exp24 \& frac22 + exp26 \& exp25 \& frac23 \& frac22 + \\
+	exp26 \& exp24 \& frac23 \& frac22 + exp25 \& exp24 \& frac23 \& frac22 + exp26 \& exp25 \& exp24 \& frac21 + \\
+	exp26 \& exp25 \& frac23 \& frac21 + exp26 \& exp24 \& frac23 \& frac21 + exp25 \& exp24 \& frac23 \& frac21 + \\
+	exp26 \& exp25 \& frac22 \& frac21 + exp26 \& exp24 \& frac22 \& frac21 + exp25 \& exp24 \& frac22 \& frac21 + \\
+	exp26 \& frac23 \& frac22 \& frac21 + exp25 \& frac23 \& frac22 \& frac21 + exp24 \& frac23 \& frac22 \& frac21 + \\
+	exp26 \& exp25 \& exp24 \& frac20 + exp26 \& exp25 \& frac23 \& frac20 + exp26 \& exp24 \& frac23 \& frac20 + \\
+	exp25 \& exp24 \& frac23 \& frac20 + exp26 \& exp25 \& frac22 \& frac20 + exp26 \& exp24 \& frac22 \& frac20 + \\
+	exp25 \& exp24 \& frac22 \& frac20 + exp26 \& frac23 \& frac22 \& frac20 + exp25 \& frac23 \& frac22 \& frac20 + \\
+	exp24 \& frac23 \& frac22 \& frac20 + exp26 \& exp25 \& frac21 \& frac20 + exp26 \& exp24 \& frac21 \& frac20 + \\
+	exp25 \& exp24 \& frac21 \& frac20 + exp26 \& frac23 \& frac21 \& frac20 + exp25 \& frac23 \& frac21 \& frac20 + \\
+	exp24 \& frac23 \& frac21 \& frac20 + exp26 \& frac22 \& frac21 \& frac20 + exp25 \& frac22 \& frac21 \& frac20 + \\
+	exp24 \& frac22 \& frac21 \& frac20 + frac23 \& frac22 \& frac21 \& frac20 + \\
+	exp26 \& exp25 \& exp24 \& frac23 \& frac22 + exp26 \& exp25 \& exp24 \& frac23 \& frac21 + \\
+	exp26 \& exp25 \& exp24 \& frac22 \& frac21 + exp26 \& exp25 \& frac23 \& frac22 \& frac21 + \\
+	exp26 \& exp24 \& frac23 \& frac22 \& frac21 + exp25 \& exp24 \& frac23 \& frac22 \& frac21 + \\
+	exp26 \& exp25 \& exp24 \& frac23 \& frac20 + exp26 \& exp25 \& exp24 \& frac22 \& frac20 + \\
+	exp26 \& exp25 \& frac23 \& frac22 \& frac20 + exp26 \& exp24 \& frac23 \& frac22 \& frac20 + \\
+	exp25 \& exp24 \& frac23 \& frac22 \& frac20 + exp26 \& exp25 \& exp24 \& frac21 \& frac20 + \\
+	exp26 \& exp25 \& frac23 \& frac21 \& frac20 + exp26 \& exp24 \& frac23 \& frac21 \& frac20 + \\
+	exp25 \& exp24 \& frac23 \& frac21 \& frac20 + exp26 \& exp25 \& frac22 \& frac21 \& frac20 + \\
+	exp26 \& exp24 \& frac22 \& frac21 \& frac20 + exp25 \& exp24 \& frac22 \& frac21 \& frac20 + \\
+	exp26 \& frac23 \& frac22 \& frac21 \& frac20 + exp25 \& frac23 \& frac22 \& frac21 \& frac20 + \\
+	exp24 \& frac23 \& frac22 \& frac21 \& frac20 + exp26 \& exp25 \& exp24 \& frac23 \& frac22 \& frac21 + \\
+	exp26 \& exp25 \& exp24 \& frac23 \& frac22 \& frac20 + exp26 \& exp25 \& exp24 \& frac23 \& frac21 \& frac20 + \\
+	exp26 \& exp25 \& exp24 \& frac22 \& frac21 \& frac20 + exp26 \& exp25 \& frac23 \& frac22 \& frac21 \& frac20 + \\
+	exp26 \& exp24 \& frac23 \& frac22 \& frac21 \& frac20 + exp25 \& exp24 \& frac23 \& frac22 \& frac21 \& frac20 + \\
+	exp26 \& exp25 \& exp24 \& frac23 \& frac22 \& frac21 \& frac20
+
+Coefficients: \\
+\hline
+& Coef. & Std. Error & z & Pr(>|z|) \\
+\hline
+(Intercept) & 9.41938 & 0.00900755 & 1045.72 & $<$1e-99 \\
+exp26 & -0.66997 0.0154819 & -43.27 & $<$1e-99 \\
+exp25 & -2.06311 0.0268273 & -76.90 & $<$1e-99 \\
+exp24 & -2.65435 0.035136 &-75.54 & $<$1e-99 \\
+frac23 & -2.24466 0.0291004 & -77.14 & $<$1e-99 \\
+frac22 & -1.09166 0.0179682 & -60.75 & $<$1e-99 \\
+frac21 & -0.528561 & 0.0147913 & -35.73 & $<$1e-99 \\
+frac20 & -0.25666 0.0136386 & -18.82 & $<$1e-78 \\
+exp26 \& exp25 3.31026 0.0303943 & 108.91 & $<$1e-99 \\
+exp26 \& exp24 3.31166 0.0384091 86.22 & $<$1e-99 \\
+exp25 \& exp24 3.36427 0.0467662 71.94 & $<$1e-99 \\
+exp26 \& frac23 & 2.21063 0.0341969 64.64 & $<$1e-99 \\
+exp25 \& frac23 & 2.21353 0.0463051 47.80 & $<$1e-99 \\
+exp24 \& frac23 & 2.18771 0.0567559 38.55 & $<$1e-99 \\
+exp26 \& frac22 & 1.05286 0.0254212 41.42 & $<$1e-99 \\
+exp25 \& frac22 & 1.08203 0.0400771 27.00 & $<$1e-99 \\
+exp24 \& frac22 & 1.00118 0.0523344 19.13 & $<$1e-80 \\
+frac23 \& frac22 0.262571 & 0.0533192 & 4.92 & $<$1e-06 \\
+exp26 \& frac21 & 0.518522 & 0.0231838 22.37 & $<$1e-99 \\
+exp25 \& frac21 & 0.588059 & 0.0381973 15.40 & $<$1e-52 \\
+exp24 \& frac21 & 0.391564 & 0.0519128 & 7.54 & $<$1e-13 \\
+frac23 \& frac21 0.100249 & 0.0464711 & 2.16 & 0.0310 \\
+frac22 \& frac21 & -0.0554615 0.0298993 -1.85 & 0.0636 \\
+exp26 \& frac20 & 0.256502 & 0.0224309 11.44 & $<$1e-29 \\
+exp25 \& frac20 & 0.275636 & 0.0380939 & 7.24 & $<$1e-12 \\
+exp24 \& frac20 & 0.157305 & 0.0511205 & 3.08 & 0.0021 \\
+frac23 \& frac20 & -0.0163266 0.0442464 -0.37 & 0.7121 \\
+frac22 \& frac20 & -0.0306188 0.0273843 -1.12 & 0.2635 \\
+frac21 \& frac20 & -0.01622 0.0224609 -0.72 & 0.4702 \\
+exp26 \& exp25 \& exp24 & -3.7201 & 0.0500705 & -74.30 & $<$1e-99 \\
+exp26 \& exp25 \& frac23 -2.33579 0.0506515 & -46.11 & $<$1e-99 \\
+exp26 \& exp24 \& frac23 -2.20285 0.0609288 & -36.15 & $<$1e-99 \\
+exp25 \& exp24 \& frac23 -2.194 0.0718226 & -30.55 & $<$1e-99 \\
+exp26 \& exp25 \& frac22 -1.11075 0.0449872 & -24.69 & $<$1e-99 \\
+exp26 \& exp24 \& frac22 -0.992582 & 0.0568254 & -17.47 & $<$1e-67 \\
+exp25 \& exp24 \& frac22 -1.02833 0.0682781 & -15.06 & $<$1e-50 & \\
+exp26 \& frac23 \& frac22 & -0.221645 & 0.0591105 -3.75 & 0.0002 \\
+exp25 \& frac23 \& frac22 & -0.189767 & 0.0735081 -2.58 & 0.0098 \\
+exp24 \& frac23 \& frac22 & -0.159957 & 0.0876712 -1.82 & 0.0681 \\
+exp26 \& exp25 \& frac21 -0.617512 & 0.0432515 & -14.28 & $<$1e-45 \\
+exp26 \& exp24 \& frac21 -0.391019 & 0.0563805 -6.94 & $<$1e-11 \\
+exp25 \& exp24 \& frac21 -0.470079 & 0.0675956 -6.95 & $<$1e-11 \\
+exp26 \& frac23 \& frac21 & -0.0721652 0.0529474 -1.36 & 0.1729 \\
+exp25 \& frac23 \& frac21 & -0.111521 & 0.0684568 -1.63 & 0.1033 \\
+exp24 \& frac23 \& frac21 & -0.0133247 0.084501 & -0.16 & 0.8747 \\
+exp26 \& frac22 \& frac21 0.0815245 0.0392391 & 2.08 & 0.0377 \\
+exp25 \& frac22 \& frac21 0.00814012 & 0.0584458 & 0.14 & 0.8892 \\
+exp24 \& frac22 \& frac21 0.194981 & 0.0767606 & 2.54 & 0.0111 \\
+frac23 \& frac22 \& frac21 & 0.168823 & 0.0836241 & 2.02 & 0.0435 \\
+exp26 \& exp25 \& frac20 -0.289377 & 0.0431281 -6.71 & $<$1e-10 \\
+exp26 \& exp24 \& frac20 -0.168634 & 0.0556392 -3.03 & 0.0024 \\
+exp25 \& exp24 \& frac20 -0.210453 & 0.0672108 -3.13 & 0.0017 \\
+exp26 \& frac23 \& frac20 0.0329177 0.050993 0.65 & 0.5186 \\
+exp25 \& frac23 \& frac20 0.0303955 0.0672234 & 0.45 & 0.6512 \\
+exp24 \& frac23 \& frac20 0.0617503 0.0830343 & 0.74 & 0.4571 \\
+exp26 \& frac22 \& frac20 0.0535908 0.0373225 & 1.44 & 0.1510 \\
+exp25 \& frac22 \& frac20 0.0570193 0.0572357 & 1.00 & 0.3191 \\
+exp24 \& frac22 \& frac20 0.186431 & 0.0750542 & 2.48 & 0.0130 \\
+frac23 \& frac22 \& frac20 & 0.223271 & 0.0785949 & 2.84 & 0.0045 \\
+exp26 \& frac21 \& frac20 0.0383958 0.0337408 & 1.14 & 0.2551 \\
+exp25 \& frac21 \& frac20 & -0.037031 & 0.0547172 -0.68 & 0.4986 \\
+exp24 \& frac21 \& frac20 0.174642 & 0.0741715 & 2.35 & 0.0185 \\
+frac23 \& frac21 \& frac20 & 0.0243721 0.0705883 & 0.35 & 0.7299 \\
+frac22 \& frac21 \& frac20 & 0.00812989 & 0.0456536 & 0.18 & 0.8587 \\
+exp26 \& exp25 \& exp24 \& frac23 & 1.72579 0.0764589 22.57 & $<$1e-99 \\
+exp26 \& exp25 \& exp24 \& frac22 & 0.778205 & 0.0729797 10.66 & $<$1e-25 \\
+exp26 \& exp25 \& frac23 \& frac22 0.108116 & 0.0791294 & 1.37 & 0.1718 \\
+exp26 \& exp24 \& frac23 \& frac22 0.116504 & 0.093165 1.25 & 0.2111 \\
+exp25 \& exp24 \& frac23 \& frac22 0.160098 & 0.107363 1.49 & 0.1359 \\
+exp26 \& exp25 \& exp24 \& frac21 & 0.374778 & 0.072237 5.19 & $<$1e-06 \\
+exp26 \& exp25 \& frac23 \& frac21 0.0650406 0.074383 0.87 & 0.3819 \\
+exp26 \& exp24 \& frac23 \& frac21 & -0.0266379 0.0901326 -0.30 & 0.7676 \\
+exp25 \& exp24 \& frac23 \& frac21 0.048816 & 0.104649 0.47 & 0.6409 \\
+exp26 \& exp25 \& frac22 \& frac21 & -0.0421689 0.0652261 -0.65 & 0.5180 \\
+exp26 \& exp24 \& frac22 \& frac21 & -0.216304 & 0.0829026 -2.61 & 0.0091 \\
+exp25 \& exp24 \& frac22 \& frac21 & -0.0738205 0.0983981 -0.75 & 0.4531 \\
+exp26 \& frac23 \& frac22 \& frac21 -0.245033 & 0.0910857 -2.69 & 0.0071 \\
+exp25 \& frac23 \& frac22 \& frac21 -0.206896 & 0.109826 & -1.88 & 0.0596 \\
+exp24 \& frac23 \& frac22 \& frac21 -0.333398 & 0.130394 & -2.56 & 0.0106 \\
+exp26 \& exp25 \& exp24 \& frac20 & 0.165002 & 0.0718424 & 2.30 & 0.0216 \\
+exp26 \& exp25 \& frac23 \& frac20 & -0.068928 & 0.073224 & -0.94 & 0.3465 \\
+exp26 \& exp24 \& frac23 \& frac20 & -0.0663364 0.0887418 -0.75 & 0.4547 \\
+exp25 \& exp24 \& frac23 \& frac20 & -0.0564231 0.10369 -0.54 & 0.5863 \\
+exp26 \& exp25 \& frac22 \& frac20 & -0.0997949 0.0641084 -1.56 & 0.1196 \\
+exp26 \& exp24 \& frac22 \& frac20 & -0.201564 & 0.0813091 -2.48 & 0.0132 \\
+exp25 \& exp24 \& frac22 \& frac20 & -0.193756 & 0.0972339 -1.99 & 0.0463 \\
+exp26 \& frac23 \& frac22 \& frac20 -0.272215 & 0.0864557 -3.15 & 0.0016 \\
+exp25 \& frac23 \& frac22 \& frac20 -0.295788 & 0.106039 & -2.79 & 0.0053 \\
+exp24 \& frac23 \& frac22 \& frac20 -0.297785 & 0.126293 & -2.36 & 0.0184 \\
+exp26 \& exp25 \& frac21 \& frac20 0.00681068 & 0.0617698 & 0.11 & 0.9122 \\
+exp26 \& exp24 \& frac21 \& frac20 & -0.191238 & 0.080418 & -2.38 & 0.0174 \\
+exp25 \& exp24 \& frac21 \& frac20 & -0.0792511 0.0962664 -0.82 & 0.4104 \\
+exp26 \& frac23 \& frac21 \& frac20 -0.0823384 0.0791671 -1.04 & 0.2983 \\
+exp25 \& frac23 \& frac21 \& frac20 -0.0295964 0.1002 & -0.30 & 0.7677 \\
+exp24 \& frac23 \& frac21 \& frac20 -0.116108 & 0.122639 & -0.95 & 0.3438 \\
+exp26 \& frac22 \& frac21 \& frac20 -0.0643744 0.058055 & -1.11 & 0.2675 \\
+exp25 \& frac22 \& frac21 \& frac20 -0.0150134 0.0843681 -0.18 & 0.8588 \\
+exp24 \& frac22 \& frac21 \& frac20 -0.225531 & 0.109814 & -2.05 & 0.0400 \\
+frac23 \& frac22 \& frac21 \& frac20 0.0397211 0.122821 0.32 & 0.7464 \\
+exp26 \& exp25 \& exp24 \& frac23 \& frac22 & -0.177568 & 0.113873 & -1.56 & 0.1189 \\
+exp26 \& exp25 \& exp24 \& frac23 \& frac21 & -0.0645602 0.111141 & -0.58 & 0.5613 \\
+exp26 \& exp25 \& exp24 \& frac22 \& frac21 0.0800041 0.105012 0.76 & 0.4461 \\
+exp26 \& exp25 \& frac23 \& frac22 \& frac21 & 0.28024 0.117434 2.39 & 0.0170 \\
+exp26 \& exp24 \& frac23 \& frac22 \& frac21 & 0.406153 & 0.137825 2.95 & 0.0032 \\
+exp25 \& exp24 \& frac23 \& frac22 \& frac21 & 0.264054 & 0.156931 1.68 & 0.0925 \\
+exp26 \& exp25 \& exp24 \& frac23 \& frac20 0.0623173 0.110163 0.57 & 0.5716 \\
+exp26 \& exp25 \& exp24 \& frac22 \& frac20 0.243298 & 0.103864 2.34 & 0.0192 \\
+exp26 \& exp25 \& frac23 \& frac22 \& frac20 & 0.371658 & 0.113849 3.26 & 0.0011 \\
+exp26 \& exp24 \& frac23 \& frac22 \& frac20 & 0.351749 & 0.133911 2.63 & 0.0086 \\
+exp25 \& exp24 \& frac23 \& frac22 \& frac20 & 0.352393 & 0.15363 & 2.29 & 0.0218 \\
+exp26 \& exp25 \& exp24 \& frac21 \& frac20 0.0898373 0.102814 0.87 & 0.3822 \\
+exp26 \& exp25 \& frac23 \& frac21 \& frac20 & 0.111498 & 0.108327 1.03 & 0.3034 \\
+exp26 \& exp24 \& frac23 \& frac21 \& frac20 & 0.174305 & 0.130404 1.34 & 0.1813 \\
+exp25 \& exp24 \& frac23 \& frac21 \& frac20 & 0.127448 & 0.150561 0.85 & 0.3973 \\
+exp26 \& exp25 \& frac22 \& frac21 \& frac20 & 0.0925078 0.093777 0.99 & 0.3239 \\
+exp26 \& exp24 \& frac22 \& frac21 \& frac20 & 0.281714 & 0.118392 2.38 & 0.0173 \\
+exp25 \& exp24 \& frac22 \& frac21 \& frac20 & 0.186697 & 0.140172 1.33 & 0.1829 \\
+exp26 \& frac23 \& frac22 \& frac21 \& frac20 0.0887042 0.132983 0.67 & 0.5047 \\
+exp25 \& frac23 \& frac22 \& frac21 \& frac20 0.0218809 0.158827 0.14 & 0.8904 \\
+exp24 \& frac23 \& frac22 \& frac21 \& frac20 0.138036 & 0.18717 & 0.74 & 0.4608 \\
+exp26 \& exp25 \& exp24 \& frac23 \& frac22 \& frac21 -0.340403 & 0.166069 & -2.05 & 0.0404 \\
+exp26 \& exp25 \& exp24 \& frac23 \& frac22 \& frac20 -0.462461 & 0.162806 & -2.84 & 0.0045 \\
+exp26 \& exp25 \& exp24 \& frac23 \& frac21 \& frac20 -0.197503 & 0.159664 & -1.24 & 0.2161 \\
+exp26 \& exp25 \& exp24 \& frac22 \& frac21 \& frac20 -0.262423 & 0.149505 & -1.76 & 0.0792 \\
+exp26 \& exp25 \& frac23 \& frac22 \& frac21 \& frac20 & -0.167091 & 0.169369 & -0.99 & 0.3239 \\
+exp26 \& exp24 \& frac23 \& frac22 \& frac21 \& frac20 & -0.289234 & 0.197513 & -1.46 & 0.1431 \\
+exp25 \& exp24 \& frac23 \& frac22 \& frac21 \& frac20 & -0.196685 & 0.22429 -0.88 & 0.3805 \\
+exp26 \& exp25 \& exp24 \& frac23 \& frac22 \& frac21 \& frac20 0.378722 & 0.237192 1.60 & 0.1103 
+\hline
+
+julia> gm1 = fit(GeneralizedLinearModel, @formula(compte ~ 1+ exp26*exp25*exp24*frac23 + exp26*exp25*exp24*frac22 + 
+	exp26*exp25*exp24*frac21 + exp26*exp25*exp24*frac20), viewbits, Poisson())
+StatsModels.TableRegressionModel{GeneralizedLinearModel{GLM.GlmResp{Vector{Float64}, Poisson{Float64}, LogLink}, 
+	GLM.DensePredChol{Float64, LinearAlgebra.CholeskyPivoted{Float64, Matrix{Float64}, Vector{Int64}}}}, Matrix{Float64}}
+
+compte ~ 1 + exp26 + exp25 + exp24 + frac23 + frac22 + frac21 + frac20 + exp26 & exp25 + exp26 & exp24 + \\
+	exp25 & exp24 + exp26 & frac23 + exp25 & frac23 + exp24 & frac23 + exp26 & frac22 + exp25 & frac22 + \\
+	exp24 & frac22 + exp26 & frac21 + exp25 & frac21 + exp24 & frac21 + exp26 & frac20 + exp25 & frac20 + \\
+	exp24 & frac20 + exp26 & exp25 & exp24 + exp26 & exp25 & frac23 + exp26 & exp24 & frac23 + \\
+	exp25 & exp24 & frac23 + exp26 & exp25 & frac22 + exp26 & exp24 & frac22 + exp25 & exp24 & frac22 + \\
+	exp26 & exp25 & frac21 + exp26 & exp24 & frac21 + exp25 & exp24 & frac21 + exp26 & exp25 & frac20 + \\
+	exp26 & exp24 & frac20 + exp25 & exp24 & frac20 + exp26 & exp25 & exp24 & frac23 + \\
+	exp26 & exp25 & exp24 & frac22 + exp26 & exp25 & exp24 & frac21 + exp26 & exp25 & exp24 & frac20\\
+
+Coefficients:
+\hline
+& Coef. & Std. Error& z & Pr(>|z|) \\
+\hline
+(Intercept) & 9.39232 & 0.00744248 & 1261.99 & $<$1e-99 \\
+exp26 & -0.665455 & 0.0103024 & -64.59 & $<$1e-99 \\
+exp25 & -2.01061 & 0.0158376 & -126.95 & $<$1e-99 \\
+exp24 & -2.76995 & 0.0215108 & -128.77 & $<$1e-99 \\
+frac23 & -2.09713 & 0.0141615 & -148.09 & $<$1e-99 \\
+frac22 & -1.07509 & 0.0101494 & -105.93 & $<$1e-99 \\
+frac21 & -0.512035 & 0.00913237 & -56.07 & $<$1e-99 \\
+frac20 & -0.259875 & 0.00891579 & -29.15 & $<$1e-99 \\
+exp26\&exp25 & 3.29731 & 0.0178063 & 185.18 & $<$1e-99 \\
+exp26\&exp24 & 3.43793 & 0.023238 & 147.94 & $<$1e-99 \\
+exp25\&exp24 & 3.42956 & 0.0275423 & 124.52 & $<$1e-99 \\
+exp26\&frac23 & 2.08161 & 0.0155301 & 134.04 & $<$1e-99 \\
+exp25\&frac23 & 2.09423 & 0.0189045 & 110.78 & $<$1e-99 \\
+exp24\&frac23 & 2.11722 & 0.0228483 & 92.66 & $<$1e-99 \\
+exp26\&frac22 & 1.07269 & 0.0119852 & 89.50 & $<$1e-99 \\
+exp25\&frac22 & 1.07533 & 0.0161196 & 66.71 & $<$1e-99 \\
+exp24\&frac22 & 1.07943 & 0.0206028 & 52.39 & $<$1e-99 \\
+exp26\&frac21 & 0.517358 & 0.0111371 & 46.45 & $<$1e-99 \\
+exp25\&frac21 & 0.501762 & 0.0154996 & 32.37 & $<$1e-99 \\
+exp24\&frac21 & 0.544666 & 0.0201234 & 27.07 & $<$1e-99 \\
+exp26\&frac20 & 0.26784 & 0.0109602 & 24.44 & $<$1e-99 \\
+exp25\&frac20 & 0.257444 & 0.0153728 & 16.75 & $<$1e-62 \\
+exp24\&frac20 & 0.270323 & 0.0200241 & 13.50 & $<$1e-40 \\
+exp26\&exp25\&exp24 & -3.78185 & 0.0294236 & -128.53 & $<$1e-99 \\
+exp26\&exp25\&frac23 & -2.27088 & 0.0202828 & -111.96 & $<$1e-99 \\
+exp26\&exp24\&frac23 & -2.14377 & 0.0241708 & -88.69 & $<$1e-99 \\
+exp25\&exp24\&frac23 & -2.11436 & 0.0275524 & -76.74 & $<$1e-99 \\
+exp26\&exp25\&frac22 & -1.1659 & 0.0177132 & -65.82 & $<$1e-99 \\
+exp26\&exp24\&frac22 & -1.10106 & 0.0220601 & -49.91 & $<$1e-99 \\
+exp25\&exp24\&frac22 & -1.07714 & 0.0257209 & -41.88 & $<$1e-99 \\
+exp26\&exp25\&frac21 & -0.547918 & 0.0171502 & -31.95 & $<$1e-99 \\
+exp26\&exp24\&frac21 & -0.555449 & 0.021613 & -25.70 & $<$1e-99 \\
+exp25\&exp24\&frac21 & -0.531705 & 0.0253386 & -20.98 & $<$1e-97 \\
+exp26\&exp25\&frac20 & -0.288557 & 0.0170357 & -16.94 & $<$1e-63 \\
+exp26\&exp24\&frac20 & -0.277975 & 0.0215206 & -12.92 & $<$1e-37 \\
+exp25\&exp24\&frac20 & -0.267692 & 0.0252597 & -10.60 & $<$1e-25 \\
+exp26\&exp25\&exp24\&frac23 & 1.60814 & 0.0291759 & 55.12 & $<$1e-99 \\
+exp26\&exp25\&exp24\&frac22 & 0.845816 & 0.0274226 & 30.84 & $<$1e-99 \\
+exp26\&exp25\&exp24\&frac21 & 0.414141 & 0.0270577 & 15.31 & $<$1e-52 \\
+exp26\&exp25\&exp24\&frac20 & 0.217101 & 0.0269823 & 8.05 & $<$1e-15 \\ 
+\hline
