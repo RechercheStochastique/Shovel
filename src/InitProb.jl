@@ -277,7 +277,6 @@ function bitsDF(distri::Distribution, taille::Int, selection::Int...)
             merge!(dico, Dict{Int64}{Int64}(s => compte+1)) # not new, count is increased.
         end
     end
-    
 
     for (s, nombre) in pairs(dico)
         push!(dfbits, (bit(s,32), bit(s, 31), bit(s, 30), bit(s, 29), bit(s, 28), bit(s, 27), bit(s, 26), bit(s, 25), bit(s, 24), bit(s, 23), 
@@ -379,13 +378,13 @@ function genereducumul(freqrelbits::Vector{Float64}, cumul::Vector{Float64}, tai
     # En premier on s'occupe du tableau
     simulation = zeros(Float32, taille)
     for t in 1:taille
-        u = rand(Float32)
+        u1 = rand(Float32)
         posit = Int32(1)
-        bittbl = Vector{Bool}(undef, 32)
+        bittbl = zeros(Bool, 32)
 
         posit = 1
         for i in 1:size(cumul)[1]
-            if u > cumul[i] 
+            if u1 > cumul[i] 
                 posit = i
             else
                 break
@@ -403,10 +402,10 @@ function genereducumul(freqrelbits::Vector{Float64}, cumul::Vector{Float64}, tai
             i +=1
         end
 
-        signe = Float32(1.0)
+        signe = 1.0
         if freqrelbits[32] != -1.0
-            u = rand(Float32)
-            if u < freqrelbits[32]
+            u2 = rand(Float32)
+            if u2 < freqrelbits[32]
                 signe = -1.0 
             end 
         else
@@ -418,8 +417,8 @@ function genereducumul(freqrelbits::Vector{Float64}, cumul::Vector{Float64}, tai
         exp = Int32(0)
         for i in 1:7 # ATTENTION on a retiré le bit 31 car on avait des "Inf" comme output
             if freqrelbits[23+i] != -1.0
-                u = rand(Float32)
-                if u < freqrelbits[23+i] 
+                u3 = rand(Float32)
+                if u3 < freqrelbits[23+i] 
                     exp += 2^(i-1) 
                 end
             else
@@ -428,13 +427,28 @@ function genereducumul(freqrelbits::Vector{Float64}, cumul::Vector{Float64}, tai
                 end
             end
         end
+        # on traite le bit 31 à part ici
+        #=
+        if freqrelbits[31] != -1.0
+            u = rand(Float32)
+            if u < freqrelbits[31] 
+                exp += 2^7
+                exp -= 2^6 # on enlève le bit 30 dans ce cas
+            end
+        else
+            if bittbl[31] == true
+                exp += 2^7
+                exp -= 2^6 # on enlève le bit 30 dans ce cas
+            end
+        end
+        =#
         exp = exp - Int32(127)
 
         frac = Float32(1.0)
         for i in 1:23
             if freqrelbits[24-i] != -1.0
-                u = rand(Float32)
-                if u < freqrelbits[24-i] 
+                u4 = rand(Float32)
+                if u4 < freqrelbits[24-i] 
                     frac += 2.0^(-i)
                 end
             else
@@ -444,12 +458,17 @@ function genereducumul(freqrelbits::Vector{Float64}, cumul::Vector{Float64}, tai
             end
         end
 
-        expo = Float32(2.0^exp)
-        valeur = Float32(signe * expo * frac)
+        infini = false
+        #expo = Float32(2.0^exp) # <- pourquoi on a mis ça? C'est pas déjà un exposant?
+        valeur = Float32(exp * frac)
+        if valeur == Inf
+            infini = true
+        end
+        valeur = signe * valeur
         simulation[t] = valeur
 
-        if verbose == true
-            @show u
+        if verbose == true || infini == true
+            @show u1
             @show nombre
             @show posit
             @show bitti
@@ -511,12 +530,12 @@ graphe = graphbits(distro, freqbits, taille)
 savefig(graphe, "bits_normal(0.0,1.0).png")
 freqrelbits = Vector{Float64}(undef, size(freqbits)[1]);
 for i = 1:size(freqrelbits)[1] freqrelbits[i] = freqbits[i] / taille end
-freqrelbits[26] = -1.0
-freqrelbits[25] = -1.0
-freqrelbits[24] = -1.0
-freqrelbits[23] = -1.0
-freqrelbits[22] = -1.0
-freqrelbits[21] = -1.0
+freqrelbits[26] = -1.0;
+freqrelbits[25] = -1.0;
+freqrelbits[24] = -1.0;
+freqrelbits[23] = -1.0;
+freqrelbits[22] = -1.0;
+freqrelbits[21] = -1.0;
 
 sort!(dfbits, [:b26, :b25, :b24, :b23, :b22, :b21]);
 viewbits = view(dfbits, :, [:compte, :b26, :b25, :b24, :b23, :b22, :b21]);
@@ -533,4 +552,10 @@ compterel = compte ./ sum(compte);
 plot(compterel, seriestype=:sticks, label="observé")
 plot!(prediction, seriestype=:line, label="modèle")
 savefig("modèle simplifié.png")
+#
+#
+#
+cumul = prediction2cumul(prediction);
+simulation = genereducumul(freqrelbits,cumul, 10000, 26,25,24,23,22,21);
+plot(simulation, seriestype=:histogram, label="simulé")
 =#
